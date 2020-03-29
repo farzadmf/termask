@@ -69,7 +69,8 @@ Let's say you have the following line in your `tf plan` output:
 If you want to mask the `name` property, you can do this:
 
 ```bash
-tf plan | tfmask -p name
+# Don't forget the '-no-color' switch
+tf plan -no-color | tfmask -p name
 ```
 
 And the output will be:
@@ -94,7 +95,7 @@ You can also mask multiple properties; let's say you have the following output:
 And you want to mask `name` and `location`:
 
 ```bash
-tf plan | tfmask -p name -p location
+tf plan -no-color | tfmask -p name -p location
 ```
 
 Which will result in the following output:
