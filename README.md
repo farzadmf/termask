@@ -57,7 +57,7 @@ By default, matching is done case sensitive, you can disable that by specifying 
 
 ### Examples
 
-Let's say you have the following line in your `tf plan` output:
+Let's say you have the following line in your `terraform plan` output:
 
 ```text
 + resource "azurerm_resource_group" "rg" {
@@ -70,7 +70,7 @@ If you want to mask the `name` property, you can do this:
 
 ```bash
 # Don't forget the '-no-color' switch
-tf plan -no-color | tfmask -p name
+terraform plan -no-color | tfmask -p name
 ```
 
 And the output will be:
@@ -95,7 +95,7 @@ You can also mask multiple properties; let's say you have the following output:
 And you want to mask `name` and `location`:
 
 ```bash
-tf plan -no-color | tfmask -p name -p location
+terraform plan -no-color | tfmask -p name -p location
 ```
 
 Which will result in the following output:
