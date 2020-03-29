@@ -31,7 +31,7 @@ go get github.com/farzadmf/tfmask
 
 You can get help by running `tfmask --help`:
 
-```bash
+```text
 NAME:
    tfmask - Mask Terraform property values
 
