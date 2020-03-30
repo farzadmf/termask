@@ -44,7 +44,7 @@ func NewMasker(m Matcher, props []string, ignoreCase bool) Masker {
 	return masker
 }
 
-// Mask scans the reader line by line and prints masked/unmasked output to StdOut
+// Mask scans the reader line by line and prints masked/unmasked output to the writer
 func (m Masker) Mask(config MaskConfig) {
 	scanner := bufio.NewScanner(config.reader)
 	for scanner.Scan() {
