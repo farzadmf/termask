@@ -1,4 +1,4 @@
-module github.com/farzadmf/tfmask
+module github.com/farzadmf/terramask
 
 go 1.14
 
