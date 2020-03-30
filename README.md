@@ -1,4 +1,4 @@
-# tfmask
+# terramask
 
 A utility to mask property values in terraform output to the console
 
@@ -24,19 +24,19 @@ Inspired by [tfmask](https://github.com/cloudposse/tfmask), this is a go program
 You can use `go get` to download the tool (a proper executable will be available soon)
 
 ```bash
-go get github.com/farzadmf/tfmask
+go get github.com/farzadmf/terramask
 ```
 
 ### Usage
 
-You can get help by running `tfmask --help`:
+You can get help by running `terramask --help`:
 
 ```text
 NAME:
-   tfmask - Mask Terraform property values
+   terramask - Mask Terraform property values
 
 USAGE:
-   tfmask [global options] command [command options] [arguments...]
+   terramask [global options] command [command options] [arguments...]
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
@@ -70,7 +70,7 @@ If you want to mask the `name` property, you can do this:
 
 ```bash
 # Don't forget the '-no-color' switch
-terraform plan -no-color | tfmask -p name
+terraform plan -no-color | terramask -p name
 ```
 
 And the output will be:
@@ -95,7 +95,7 @@ You can also mask multiple properties; let's say you have the following output:
 And you want to mask `name` and `location`:
 
 ```bash
-terraform plan -no-color | tfmask -p name -p location
+terraform plan -no-color | terramask -p name -p location
 ```
 
 Which will result in the following output:
