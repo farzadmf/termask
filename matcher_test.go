@@ -1,0 +1,77 @@
+package main
+
+import (
+	"testing"
+)
+
+func TestMatch(t *testing.T) {
+	matcher := NewMatcher()
+
+	verifyMatchType := func(t *testing.T, expected, got int) {
+		t.Helper()
+
+		if expected != got {
+			t.Errorf("expected %d for match type, got %d", expected, got)
+		}
+	}
+
+	verifyNoMatch := func(t *testing.T, matches []string) {
+		if len(matches) > 0 {
+			t.Errorf("expected no match; match count was %d", len(matches))
+		}
+	}
+
+	verityMatch := func(t *testing.T, matches []string) {
+		if len(matches) == 0 {
+			t.Errorf("expected match count to be positive; got %d", len(matches))
+		}
+	}
+
+	t.Run("should match new resource", func(t *testing.T) {
+		line := ` + "my_prop" = "my_value"`
+		matchType, matches := matcher.Match(line)
+
+		verifyMatchType(t, NewOrRemove, matchType)
+		verityMatch(t, matches)
+	})
+
+	t.Run("should match removed resource", func(t *testing.T) {
+		line := ` - "my_prop" = "my_value"`
+		matchType, matches := matcher.Match(line)
+
+		verifyMatchType(t, NewOrRemove, matchType)
+		verityMatch(t, matches)
+	})
+
+	t.Run("should match renamed resource", func(t *testing.T) {
+		line := ` ~ "my_prop" = "old_value" -> "new_value"`
+		matchType, matches := matcher.Match(line)
+
+		verifyMatchType(t, Replace, matchType)
+		verityMatch(t, matches)
+	})
+
+	t.Run("should match removed resource to null", func(t *testing.T) {
+		line := ` - "my_prop" = "old_value" -> null`
+		matchType, matches := matcher.Match(line)
+
+		verifyMatchType(t, RemoveToNull, matchType)
+		verityMatch(t, matches)
+	})
+
+	t.Run("should not match known after apply for new resource", func(t *testing.T) {
+		line := ` ~ "my_prop" = (known after apply)`
+		matchType, matches := matcher.Match(line)
+
+		verifyMatchType(t, None, matchType)
+		verifyNoMatch(t, matches)
+	})
+
+	t.Run("should match known after apply for changed resource", func(t *testing.T) {
+		line := ` ~ "my_prop" = "old_value" -> (known after apply)`
+		matchType, matches := matcher.Match(line)
+
+		verifyMatchType(t, ReplaceKnownAfterApply, matchType)
+		verityMatch(t, matches)
+	})
+}
