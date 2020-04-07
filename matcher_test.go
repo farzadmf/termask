@@ -28,7 +28,7 @@ func TestMatch(t *testing.T) {
 	}
 
 	t.Run("should match new resource", func(t *testing.T) {
-		line := ` + "my_prop" = "my_value"`
+		line := ` + my_prop = "my_value"`
 		matchType, matches := matcher.Match(line)
 
 		verifyMatchType(t, NewOrRemove, matchType)
@@ -36,7 +36,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("should match removed resource", func(t *testing.T) {
-		line := ` - "my_prop" = "my_value"`
+		line := ` - my_prop = "my_value"`
 		matchType, matches := matcher.Match(line)
 
 		verifyMatchType(t, NewOrRemove, matchType)
@@ -44,7 +44,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("should match renamed resource", func(t *testing.T) {
-		line := ` ~ "my_prop" = "old_value" -> "new_value"`
+		line := ` ~ my_prop = "old_value" -> "new_value"`
 		matchType, matches := matcher.Match(line)
 
 		verifyMatchType(t, Replace, matchType)
@@ -52,7 +52,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("should match removed resource to null", func(t *testing.T) {
-		line := ` - "my_prop" = "old_value" -> null`
+		line := ` - my_prop = "old_value" -> null`
 		matchType, matches := matcher.Match(line)
 
 		verifyMatchType(t, RemoveToNull, matchType)
@@ -60,7 +60,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("should not match known after apply for new resource", func(t *testing.T) {
-		line := ` ~ "my_prop" = (known after apply)`
+		line := ` ~ my_prop = (known after apply)`
 		matchType, matches := matcher.Match(line)
 
 		verifyMatchType(t, None, matchType)
@@ -68,7 +68,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("should match known after apply for changed resource", func(t *testing.T) {
-		line := ` ~ "my_prop" = "old_value" -> (known after apply)`
+		line := ` ~ my_prop = "old_value" -> (known after apply)`
 		matchType, matches := matcher.Match(line)
 
 		verifyMatchType(t, ReplaceKnownAfterApply, matchType)
