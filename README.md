@@ -1,14 +1,14 @@
-# terramask
+# termask
 
-A utility to mask property values in terraform output to the console
+A utility to mask property values in the terminal
 
-This project is heavily inspired by [tfmask from cloudposse](https://github.com/cloudposse/tfmask), with a few differences:
+It supports a few different inputs:
 
-- It's tailored towards Terraform 0.12
-- It doesn't use environment variables to determine what to mask; instead, it accepts CLI arguments
-- It *may* support less scenarios, but it doesn't have to stay that way 🙂
+- Terraform (v0.12)
 
 ## Introduction
+
+### Terraform
 
 Although Terraform allows marking `output` variables as `sensitive`, at the time of this writing, it doesn't provide a way to mark arbitrary values as "secret"
 
@@ -17,26 +17,26 @@ Inspired by [tfmask](https://github.com/cloudposse/tfmask), this is a go program
 
 ***NOTE***: it's worth noting that, for the moment, it only supports the `-no-color` option of Terraform
 
-## How to use
-
-### Installation
+## Installation
 
 You can use `go get` to download the tool (a proper executable will be available soon)
 
 ```bash
-go get github.com/farzadmf/terramask
+go get github.com/farzadmf/termask
 ```
 
-### Usage
+## Usage
 
-You can get help by running `terramask --help`:
+### Terraform
+
+You can get help by running `termask --help`:
 
 ```text
 NAME:
-   terramask - Mask Terraform property values
+   termask - Mask Terraform property values
 
 USAGE:
-   terramask [global options] command [command options] [arguments...]
+   termask [global options] command [command options] [arguments...]
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
@@ -70,7 +70,7 @@ If you want to mask the `name` property, you can do this:
 
 ```bash
 # Don't forget the '-no-color' switch
-terraform plan -no-color | terramask -p name
+terraform plan -no-color | termask -p name
 ```
 
 And the output will be:
@@ -95,7 +95,7 @@ You can also mask multiple properties; let's say you have the following output:
 And you want to mask `name` and `location`:
 
 ```bash
-terraform plan -no-color | terramask -p name -p location
+terraform plan -no-color | termask -p name -p location
 ```
 
 Which will result in the following output:

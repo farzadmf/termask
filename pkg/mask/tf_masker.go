@@ -1,29 +1,24 @@
-package main
+package mask
 
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
-)
 
-// MaskConfig is used to specify the reader to mask and writer to write the output
-type MaskConfig struct {
-	reader io.Reader
-	writer io.Writer
-}
+	matcher "github.com/farzadmf/termask/pkg/match"
+)
 
 // Masker reads from its reader, and masks lines matched by the matcher
 type Masker struct {
 	MaskedProps []string
 
-	matcher    Matcher
+	matcher    matcher.Matcher
 	propsRegex *regexp.Regexp
 }
 
 // NewMasker creates a new masker using the specified reader and matcher
-func NewMasker(m Matcher, props []string, ignoreCase bool) Masker {
+func NewMasker(m matcher.Matcher, props []string, ignoreCase bool) Masker {
 	masked := "((?i).*password)"
 
 	if len(props) > 0 {
@@ -45,23 +40,23 @@ func NewMasker(m Matcher, props []string, ignoreCase bool) Masker {
 }
 
 // Mask scans the reader line by line and prints masked/unmasked output to the writer
-func (m Masker) Mask(config MaskConfig) {
-	scanner := bufio.NewScanner(config.reader)
+func (m Masker) Mask(config Config) {
+	scanner := bufio.NewScanner(config.Reader)
 	for scanner.Scan() {
 		line := scanner.Text()
 		match, matches := m.matcher.Match(line)
 
 		switch match {
-		case NewOrRemove:
-			fmt.Fprintln(config.writer, m.maskNewOrRemove(matches))
-		case Replace:
-			fmt.Fprintln(config.writer, m.maskReplace(matches))
-		case ReplaceKnownAfterApply:
-			fmt.Fprintln(config.writer, m.maskKnownAfterApply(matches))
-		case RemoveToNull:
-			fmt.Fprintln(config.writer, m.maskRemoveToNull(matches))
-		case None:
-			fmt.Fprintln(config.writer, line)
+		case matcher.TFNewOrRemove:
+			fmt.Fprintln(config.Writer, m.maskNewOrRemove(matches))
+		case matcher.TFReplace:
+			fmt.Fprintln(config.Writer, m.maskReplace(matches))
+		case matcher.TFReplaceKnownAfterApply:
+			fmt.Fprintln(config.Writer, m.maskKnownAfterApply(matches))
+		case matcher.TFRemoveToNull:
+			fmt.Fprintln(config.Writer, m.maskRemoveToNull(matches))
+		case matcher.None:
+			fmt.Fprintln(config.Writer, line)
 		}
 	}
 }

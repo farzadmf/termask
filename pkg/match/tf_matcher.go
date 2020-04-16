@@ -1,17 +1,8 @@
-package main
+package match
 
 import (
 	"fmt"
 	"regexp"
-)
-
-// These values tell us what we matched against
-const (
-	None = iota
-	NewOrRemove
-	Replace
-	ReplaceKnownAfterApply
-	RemoveToNull
 )
 
 const (
@@ -39,31 +30,31 @@ var (
 	removeToNullRegex           = regexp.MustCompile(removeToNullStr)
 )
 
-// Matcher is used to match a line against a pattern
-type Matcher struct{}
+// TFMatcher is used to match a terraform line against a pattern
+type TFMatcher struct{}
 
-// NewMatcher creates a matcher to match input lines against known patterns
-func NewMatcher() Matcher {
-	return Matcher{}
+// NewTFMatcher creates a matcher to match input lines against known patterns
+func NewTFMatcher() TFMatcher {
+	return TFMatcher{}
 }
 
 // Match tries to match a line against a pattern
 // Returns what we matched against and the matches slice (if we have a match)
-func (m Matcher) Match(line string) (int, []string) {
+func (m TFMatcher) Match(line string) (int, []string) {
 	if newOrRemoveRegex.MatchString(line) {
-		return NewOrRemove, newOrRemoveRegex.FindStringSubmatch(line)
+		return TFNewOrRemove, newOrRemoveRegex.FindStringSubmatch(line)
 	}
 
 	if replaceRegex.MatchString(line) {
-		return Replace, replaceRegex.FindStringSubmatch(line)
+		return TFReplace, replaceRegex.FindStringSubmatch(line)
 	}
 
 	if replaceKnownAfterApplyRegex.MatchString(line) {
-		return ReplaceKnownAfterApply, replaceKnownAfterApplyRegex.FindStringSubmatch(line)
+		return TFReplaceKnownAfterApply, replaceKnownAfterApplyRegex.FindStringSubmatch(line)
 	}
 
 	if removeToNullRegex.MatchString(line) {
-		return RemoveToNull, removeToNullRegex.FindStringSubmatch(line)
+		return TFRemoveToNull, removeToNullRegex.FindStringSubmatch(line)
 	}
 
 	return None, []string{}

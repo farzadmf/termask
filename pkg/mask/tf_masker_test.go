@@ -1,17 +1,19 @@
-package main
+package mask
 
 import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/farzadmf/termask/pkg/match"
 )
 
 var (
 	output bytes.Buffer
 	input  = ""
 
-	config = MaskConfig{
-		writer: &output,
+	config = Config{
+		Writer: &output,
 	}
 )
 
@@ -19,10 +21,10 @@ func TestMask(t *testing.T) {
 	var masker Masker
 
 	t.Run("should mask 'password' by default", func(t *testing.T) {
-		masker = NewMasker(NewMatcher(), []string{}, false)
+		masker = NewMasker(match.NewTFMatcher(), []string{}, false)
 		input = ` + password = "value"`
 		output = bytes.Buffer{}
-		config.reader = strings.NewReader(input)
+		config.Reader = strings.NewReader(input)
 
 		masker.Mask(config)
 		trimmedOutput := strings.TrimSpace(output.String())
@@ -32,10 +34,10 @@ func TestMask(t *testing.T) {
 	})
 
 	t.Run("should mask 'PaSSworD' by default", func(t *testing.T) {
-		masker = NewMasker(NewMatcher(), []string{}, false)
+		masker = NewMasker(match.NewTFMatcher(), []string{}, false)
 		input = ` + PaSSworD = "value"`
 		output = bytes.Buffer{}
-		config.reader = strings.NewReader(input)
+		config.Reader = strings.NewReader(input)
 
 		masker.Mask(config)
 		trimmedOutput := strings.TrimSpace(output.String())
@@ -45,10 +47,10 @@ func TestMask(t *testing.T) {
 	})
 
 	t.Run("should mask 'My_PassWord' by default", func(t *testing.T) {
-		masker = NewMasker(NewMatcher(), []string{}, false)
+		masker = NewMasker(match.NewTFMatcher(), []string{}, false)
 		input = ` + My_PassWord = "value"`
 		output = bytes.Buffer{}
-		config.reader = strings.NewReader(input)
+		config.Reader = strings.NewReader(input)
 
 		masker.Mask(config)
 		trimmedOutput := strings.TrimSpace(output.String())
@@ -59,10 +61,10 @@ func TestMask(t *testing.T) {
 
 	t.Run("should mask custom property case sensitive", func(t *testing.T) {
 		props := []string{"my_prop"}
-		masker = NewMasker(NewMatcher(), props, false)
+		masker = NewMasker(match.NewTFMatcher(), props, false)
 		input = ` + my_prop = "value"`
 		output = bytes.Buffer{}
-		config.reader = strings.NewReader(input)
+		config.Reader = strings.NewReader(input)
 
 		masker.Mask(config)
 		trimmedOutput := strings.TrimSpace(output.String())
@@ -73,10 +75,10 @@ func TestMask(t *testing.T) {
 
 	t.Run("should mask custom property ignoring case", func(t *testing.T) {
 		props := []string{"my_prop"}
-		masker = NewMasker(NewMatcher(), props, true)
+		masker = NewMasker(match.NewTFMatcher(), props, true)
 		input = ` + My_PrOP = "value"`
 		output = bytes.Buffer{}
-		config.reader = strings.NewReader(input)
+		config.Reader = strings.NewReader(input)
 
 		masker.Mask(config)
 		trimmedOutput := strings.TrimSpace(output.String())
@@ -87,10 +89,10 @@ func TestMask(t *testing.T) {
 
 	t.Run("should not mask when property doesn't match", func(t *testing.T) {
 		props := []string{"my_prop"}
-		masker = NewMasker(NewMatcher(), props, true)
+		masker = NewMasker(match.NewTFMatcher(), props, true)
 		input = ` + other_prop = "value"`
 		output = bytes.Buffer{}
-		config.reader = strings.NewReader(input)
+		config.Reader = strings.NewReader(input)
 
 		masker.Mask(config)
 		trimmedOutput := strings.TrimSpace(output.String())

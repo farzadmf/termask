@@ -1,11 +1,11 @@
-package main
+package match
 
 import (
 	"testing"
 )
 
 func TestMatch(t *testing.T) {
-	matcher := NewMatcher()
+	matcher := NewTFMatcher()
 
 	verifyMatchType := func(t *testing.T, expected, got int) {
 		t.Helper()
@@ -31,7 +31,7 @@ func TestMatch(t *testing.T) {
 		line := ` + my_prop = "my_value"`
 		matchType, matches := matcher.Match(line)
 
-		verifyMatchType(t, NewOrRemove, matchType)
+		verifyMatchType(t, TFNewOrRemove, matchType)
 		verityMatch(t, matches)
 	})
 
@@ -39,7 +39,7 @@ func TestMatch(t *testing.T) {
 		line := ` - my_prop = "my_value"`
 		matchType, matches := matcher.Match(line)
 
-		verifyMatchType(t, NewOrRemove, matchType)
+		verifyMatchType(t, TFNewOrRemove, matchType)
 		verityMatch(t, matches)
 	})
 
@@ -47,7 +47,7 @@ func TestMatch(t *testing.T) {
 		line := ` ~ my_prop = "old_value" -> "new_value"`
 		matchType, matches := matcher.Match(line)
 
-		verifyMatchType(t, Replace, matchType)
+		verifyMatchType(t, TFReplace, matchType)
 		verityMatch(t, matches)
 	})
 
@@ -55,7 +55,7 @@ func TestMatch(t *testing.T) {
 		line := ` - my_prop = "old_value" -> null`
 		matchType, matches := matcher.Match(line)
 
-		verifyMatchType(t, RemoveToNull, matchType)
+		verifyMatchType(t, TFRemoveToNull, matchType)
 		verityMatch(t, matches)
 	})
 
@@ -71,7 +71,7 @@ func TestMatch(t *testing.T) {
 		line := ` ~ my_prop = "old_value" -> (known after apply)`
 		matchType, matches := matcher.Match(line)
 
-		verifyMatchType(t, ReplaceKnownAfterApply, matchType)
+		verifyMatchType(t, TFReplaceKnownAfterApply, matchType)
 		verityMatch(t, matches)
 	})
 }

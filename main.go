@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"runtime"
 )
@@ -14,6 +14,7 @@ func init() {
 func main() {
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("\n%s\n", err.Error())
+		os.Exit(1)
 	}
 }
