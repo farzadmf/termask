@@ -2,7 +2,7 @@
 
 A utility to mask property values in the terminal
 
-It supports a few different inputs:
+It supports different inputs:
 
 - Terraform (v0.12)
 
@@ -12,7 +12,7 @@ It supports a few different inputs:
 
 Although Terraform allows marking `output` variables as `sensitive`, at the time of this writing, it doesn't provide a way to mark arbitrary values as "secret"
 
-Inspired by [tfmask](https://github.com/cloudposse/tfmask), this is a go program to allow masking property values (the ones in the form of
+Inspired by [tfmask](https://github.com/cloudposse/tfmask), this program allows masking property values (the ones in the form of
 `"property" = "value"`) in the output of `terraform plan` and `terraform apply`
 
 ***NOTE***: it's worth noting that, for the moment, it only supports the `-no-color` option of Terraform
@@ -33,7 +33,7 @@ You can get help by running `termask --help`:
 
 ```text
 NAME:
-   termask - Mask Terraform property values
+   termask - Mask values in the terminal
 
 USAGE:
    termask [global options] command [command options] [arguments...]
@@ -42,7 +42,8 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --property value, -p value  property to mask (can be specified multiple times)
+   --mode value, -m value      (tf|json) mode determines the type of the input
+   --property value, -p value  property whose value we want to mask (can be specified multiple times)
    --ignore-case, -i           case insensitive match (default: false)
    --help, -h                  show help (default: false)
 ```
@@ -70,7 +71,7 @@ If you want to mask the `name` property, you can do this:
 
 ```bash
 # Don't forget the '-no-color' switch
-terraform plan -no-color | termask -p name
+terraform plan -no-color | termask -m tf -p name
 ```
 
 And the output will be:
@@ -95,7 +96,7 @@ You can also mask multiple properties; let's say you have the following output:
 And you want to mask `name` and `location`:
 
 ```bash
-terraform plan -no-color | termask -p name -p location
+terraform plan -no-color | termask -m tf -p name -p location
 ```
 
 Which will result in the following output:
