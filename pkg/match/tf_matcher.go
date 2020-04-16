@@ -6,28 +6,28 @@ import (
 )
 
 const (
-	newOrRemovedProp = "( +)( *?[+-] *?)( +)"
-	changedProp      = "( +)( *?[~] *?)( +)"
-	removedProp      = "( +)( *?[-] *?)( +)"
+	tfNewOrRemovedProp = "( +)( *?[+-] *?)( +)"
+	tfChangedProp      = "( +)( *?[~] *?)( +)"
+	tfRemovedProp      = "( +)( *?[-] *?)( +)"
 
-	value           = "([\"<])(.*?)([>\"])"
-	propEquals      = "([\"a-zA-Z0-9%._-]+)( +)=( +)"
-	valueChange     = "( +)->( +)"
-	comment         = "( +[#].*)*"
-	null            = "(null)"
-	knownAfterApply = "(\\(known after apply\\))"
+	tfValue           = "([\"<])(.*?)([>\"])"
+	tfPropEquals      = "([\"a-zA-Z0-9%._-]+)( +)=( +)"
+	tfValueChange     = "( +)->( +)"
+	tfComment         = "( +[#].*)*"
+	tfNull            = "(null)"
+	tfKnownAfterApply = "(\\(known after apply\\))"
 )
 
 var (
-	newOrRemoveStr            = fmt.Sprintf("^%s%s%s$", newOrRemovedProp, propEquals, value)
-	replaceStr                = fmt.Sprintf("^%s%s%s%s%s%s$", changedProp, propEquals, value, valueChange, value, comment)
-	replaceKnownAfterApplyStr = fmt.Sprintf("^%s%s%s%s%s%s$", changedProp, propEquals, value, valueChange, knownAfterApply, comment)
-	removeToNullStr           = fmt.Sprintf("^%s%s%s%s%s$", removedProp, propEquals, value, valueChange, null)
+	tfNewOrRemoveStr            = fmt.Sprintf("^%s%s%s$", tfNewOrRemovedProp, tfPropEquals, tfValue)
+	tfReplaceStr                = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfValue, tfComment)
+	tfReplaceKnownAfterApplyStr = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfKnownAfterApply, tfComment)
+	tfRemoveToNullStr           = fmt.Sprintf("^%s%s%s%s%s$", tfRemovedProp, tfPropEquals, tfValue, tfValueChange, tfNull)
 
-	newOrRemoveRegex            = regexp.MustCompile(newOrRemoveStr)
-	replaceRegex                = regexp.MustCompile(replaceStr)
-	replaceKnownAfterApplyRegex = regexp.MustCompile(replaceKnownAfterApplyStr)
-	removeToNullRegex           = regexp.MustCompile(removeToNullStr)
+	tfNewOrRemoveRegex            = regexp.MustCompile(tfNewOrRemoveStr)
+	tfReplaceRegex                = regexp.MustCompile(tfReplaceStr)
+	tfReplaceKnownAfterApplyRegex = regexp.MustCompile(tfReplaceKnownAfterApplyStr)
+	tfRemoveToNullRegex           = regexp.MustCompile(tfRemoveToNullStr)
 )
 
 // TFMatcher is used to match a terraform line against a pattern
@@ -41,20 +41,20 @@ func NewTFMatcher() TFMatcher {
 // Match tries to match a line against a pattern
 // Returns what we matched against and the matches slice (if we have a match)
 func (m TFMatcher) Match(line string) (int, []string) {
-	if newOrRemoveRegex.MatchString(line) {
-		return TFNewOrRemove, newOrRemoveRegex.FindStringSubmatch(line)
+	if tfNewOrRemoveRegex.MatchString(line) {
+		return TFNewOrRemove, tfNewOrRemoveRegex.FindStringSubmatch(line)
 	}
 
-	if replaceRegex.MatchString(line) {
-		return TFReplace, replaceRegex.FindStringSubmatch(line)
+	if tfReplaceRegex.MatchString(line) {
+		return TFReplace, tfReplaceRegex.FindStringSubmatch(line)
 	}
 
-	if replaceKnownAfterApplyRegex.MatchString(line) {
-		return TFReplaceKnownAfterApply, replaceKnownAfterApplyRegex.FindStringSubmatch(line)
+	if tfReplaceKnownAfterApplyRegex.MatchString(line) {
+		return TFReplaceKnownAfterApply, tfReplaceKnownAfterApplyRegex.FindStringSubmatch(line)
 	}
 
-	if removeToNullRegex.MatchString(line) {
-		return TFRemoveToNull, removeToNullRegex.FindStringSubmatch(line)
+	if tfRemoveToNullRegex.MatchString(line) {
+		return TFRemoveToNull, tfRemoveToNullRegex.FindStringSubmatch(line)
 	}
 
 	return None, []string{}
