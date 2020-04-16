@@ -5,14 +5,18 @@ import (
 )
 
 func assertNoPropAndValue(t *testing.T, propIndex, valueIndex int) {
+	t.Helper()
+
 	if propIndex != -1 || valueIndex != -1 {
-		t.Errorf("expected 'prop' and 'value' indices to be -1, got %d", valueIndex)
+		t.Errorf("expected 'prop' and 'value' indices to be -1, got %d and %d", propIndex, valueIndex)
 	}
 }
 
 func assertPropAndValue(t *testing.T, propIndex, valueIndex int) {
+	t.Helper()
+
 	if propIndex < 0 || valueIndex < 0 {
-		t.Errorf("expected 'value' and 'prop' indices to be > 0, got %d", valueIndex)
+		t.Errorf("expected 'prop' and 'value' indices to be > 0, got %d and %d", propIndex, valueIndex)
 	}
 }
 

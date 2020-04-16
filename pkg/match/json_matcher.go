@@ -29,7 +29,7 @@ func (m JSONMatcher) Match(line string) (propIndex, valueIndex int, matches []st
 	valueIndex = -1
 
 	if jsonLineRegex.MatchString(line) {
-		valueIndex = getValueIndex(jsonLineRegex.SubexpNames())
+		propIndex, valueIndex = getValueIndex(jsonLineRegex.SubexpNames())
 		matches = jsonLineRegex.FindAllStringSubmatch(line, -1)[0]
 	}
 

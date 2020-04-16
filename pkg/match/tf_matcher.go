@@ -11,7 +11,7 @@ const (
 	tfRemovedProp      = "( +)( *?[-] *?)( +)"
 
 	tfValue           = "([\"<])(?P<value>.*?)([>\"])"
-	tfPropEquals      = "([\"a-zA-Z0-9%._-]+)( +)(=)( +)"
+	tfPropEquals      = "(?P<prop>[\"a-zA-Z0-9%._-]+)( +)(=)( +)"
 	tfValueChange     = "( +)(->)( +)"
 	tfComment         = "( +[#].*)*"
 	tfNull            = "(null)"
@@ -40,20 +40,21 @@ func NewTFMatcher() TFMatcher {
 
 // Match tries to match a line against a pattern
 // Returns what we matched against and the matches slice (if we have a match)
-func (m TFMatcher) Match(line string) (valueIndex int, matches []string) {
+func (m TFMatcher) Match(line string) (propIndex, valueIndex int, matches []string) {
+	propIndex = -1
 	valueIndex = -1
 
 	if tfNewOrRemoveRegex.MatchString(line) {
-		valueIndex = getValueIndex(tfNewOrRemoveRegex.SubexpNames())
+		propIndex, valueIndex = getValueIndex(tfNewOrRemoveRegex.SubexpNames())
 		matches = tfNewOrRemoveRegex.FindAllStringSubmatch(line, -1)[0]
 	} else if tfReplaceRegex.MatchString(line) {
-		valueIndex = getValueIndex(tfReplaceRegex.SubexpNames())
+		propIndex, valueIndex = getValueIndex(tfReplaceRegex.SubexpNames())
 		matches = tfReplaceRegex.FindAllStringSubmatch(line, -1)[0]
 	} else if tfReplaceKnownAfterApplyRegex.MatchString(line) {
-		valueIndex = getValueIndex(tfReplaceKnownAfterApplyRegex.SubexpNames())
+		propIndex, valueIndex = getValueIndex(tfReplaceKnownAfterApplyRegex.SubexpNames())
 		matches = tfReplaceKnownAfterApplyRegex.FindAllStringSubmatch(line, -1)[0]
 	} else if tfRemoveToNullRegex.MatchString(line) {
-		valueIndex = getValueIndex(tfRemoveToNullRegex.SubexpNames())
+		propIndex, valueIndex = getValueIndex(tfRemoveToNullRegex.SubexpNames())
 		matches = tfRemoveToNullRegex.FindAllStringSubmatch(line, -1)[0]
 	}
 

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/farzadmf/termask/pkg/mask"
 	"github.com/farzadmf/termask/pkg/match"
@@ -48,15 +47,16 @@ var (
 				return nil
 			case "json":
 				m := match.NewJSONMatcher()
-				names, matches := m.Hello(`"prop": "value"`)
-				for i := 0; i < len(names); i++ {
-					fmt.Println("name", names[i])
-					if names[i] == "value" {
-						matches[i] = "***"
-					}
-				}
+				propIndex, valueIndex, matches := m.Match(`"prop": "value"`)
+				fmt.Println(propIndex, valueIndex, matches)
+				// for i := 0; i < len(names); i++ {
+				// 	fmt.Println("name", names[i])
+				// 	if names[i] == "value" {
+				// 		matches[i] = "***"
+				// 	}
+				// }
 
-				fmt.Println(strings.Join(matches[1:], ""))
+				// fmt.Println(strings.Join(matches[1:], ""))
 
 				return nil
 

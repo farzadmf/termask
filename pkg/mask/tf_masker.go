@@ -43,21 +43,21 @@ func NewMasker(m matcher.Matcher, props []string, ignoreCase bool) Masker {
 func (m Masker) Mask(config Config) {
 	scanner := bufio.NewScanner(config.Reader)
 	for scanner.Scan() {
-		line := scanner.Text()
-		match, matches := m.matcher.Match(line)
+		// line := scanner.Text()
+		// match, matches := m.matcher.Match(line)
 
-		switch match {
-		case matcher.TFNewOrRemove:
-			fmt.Fprintln(config.Writer, m.maskNewOrRemove(matches))
-		case matcher.TFReplace:
-			fmt.Fprintln(config.Writer, m.maskReplace(matches))
-		case matcher.TFReplaceKnownAfterApply:
-			fmt.Fprintln(config.Writer, m.maskKnownAfterApply(matches))
-		case matcher.TFRemoveToNull:
-			fmt.Fprintln(config.Writer, m.maskRemoveToNull(matches))
-		case matcher.None:
-			fmt.Fprintln(config.Writer, line)
-		}
+		// switch match {
+		// case matcher.TFNewOrRemove:
+		// 	fmt.Fprintln(config.Writer, m.maskNewOrRemove(matches))
+		// case matcher.TFReplace:
+		// 	fmt.Fprintln(config.Writer, m.maskReplace(matches))
+		// case matcher.TFReplaceKnownAfterApply:
+		// 	fmt.Fprintln(config.Writer, m.maskKnownAfterApply(matches))
+		// case matcher.TFRemoveToNull:
+		// 	fmt.Fprintln(config.Writer, m.maskRemoveToNull(matches))
+		// case matcher.None:
+		// 	fmt.Fprintln(config.Writer, line)
+		// }
 	}
 }
 
