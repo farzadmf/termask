@@ -13,4 +13,6 @@ const (
 	TFReplace
 	TFReplaceKnownAfterApply
 	TFRemoveToNull
+
+	JSONLine
 )
