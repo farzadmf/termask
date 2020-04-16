@@ -10,9 +10,9 @@ const (
 	tfChangedProp      = "( +)( *?[~] *?)( +)"
 	tfRemovedProp      = "( +)( *?[-] *?)( +)"
 
-	tfValue           = "([\"<])(.*?)([>\"])"
-	tfPropEquals      = "([\"a-zA-Z0-9%._-]+)( +)=( +)"
-	tfValueChange     = "( +)->( +)"
+	tfValue           = "([\"<])(?P<value>.*?)([>\"])"
+	tfPropEquals      = "([\"a-zA-Z0-9%._-]+)( +)(=)( +)"
+	tfValueChange     = "( +)(->)( +)"
 	tfComment         = "( +[#].*)*"
 	tfNull            = "(null)"
 	tfKnownAfterApply = "(\\(known after apply\\))"
@@ -40,22 +40,22 @@ func NewTFMatcher() TFMatcher {
 
 // Match tries to match a line against a pattern
 // Returns what we matched against and the matches slice (if we have a match)
-func (m TFMatcher) Match(line string) (int, []string) {
+func (m TFMatcher) Match(line string) (valueIndex int, matches []string) {
+	valueIndex = -1
+
 	if tfNewOrRemoveRegex.MatchString(line) {
-		return TFNewOrRemove, tfNewOrRemoveRegex.FindStringSubmatch(line)
+		valueIndex = getValueIndex(tfNewOrRemoveRegex.SubexpNames())
+		matches = tfNewOrRemoveRegex.FindAllStringSubmatch(line, -1)[0]
+	} else if tfReplaceRegex.MatchString(line) {
+		valueIndex = getValueIndex(tfReplaceRegex.SubexpNames())
+		matches = tfReplaceRegex.FindAllStringSubmatch(line, -1)[0]
+	} else if tfReplaceKnownAfterApplyRegex.MatchString(line) {
+		valueIndex = getValueIndex(tfReplaceKnownAfterApplyRegex.SubexpNames())
+		matches = tfReplaceKnownAfterApplyRegex.FindAllStringSubmatch(line, -1)[0]
+	} else if tfRemoveToNullRegex.MatchString(line) {
+		valueIndex = getValueIndex(tfRemoveToNullRegex.SubexpNames())
+		matches = tfRemoveToNullRegex.FindAllStringSubmatch(line, -1)[0]
 	}
 
-	if tfReplaceRegex.MatchString(line) {
-		return TFReplace, tfReplaceRegex.FindStringSubmatch(line)
-	}
-
-	if tfReplaceKnownAfterApplyRegex.MatchString(line) {
-		return TFReplaceKnownAfterApply, tfReplaceKnownAfterApplyRegex.FindStringSubmatch(line)
-	}
-
-	if tfRemoveToNullRegex.MatchString(line) {
-		return TFRemoveToNull, tfRemoveToNullRegex.FindStringSubmatch(line)
-	}
-
-	return None, []string{}
+	return
 }

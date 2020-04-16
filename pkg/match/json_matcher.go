@@ -6,9 +6,7 @@ import (
 )
 
 const (
-	jsonLine = `(?P<leading_ws> *?)(?P<prop_begin_quote>")` +
-		`(?P<prop>[a-zA-Z0-9%._-]+)(?P<prop_end_quote>")(?P<colon>:)(?P<ws_after_colon> )` +
-		`(?P<value_begin_quote>")(?P<value>[a-zA-Z0-9%._-]+)(?P<value_end_quote>")(?P<trailing_chars>.*)`
+	jsonLine = `( *?)(")(?P<prop>[a-zA-Z0-9%._-]+)(")(:)( )(")(?P<value>[a-zA-Z0-9%._-]+)(")(.*)`
 )
 
 var (
@@ -26,10 +24,14 @@ func NewJSONMatcher() JSONMatcher {
 }
 
 // Match match a line against JSON and returns the result
-func (m JSONMatcher) Match(line string) (int, []string) {
+func (m JSONMatcher) Match(line string) (propIndex, valueIndex int, matches []string) {
+	propIndex = -1
+	valueIndex = -1
+
 	if jsonLineRegex.MatchString(line) {
-		return JSONLine, jsonLineRegex.FindStringSubmatch(line)
+		valueIndex = getValueIndex(jsonLineRegex.SubexpNames())
+		matches = jsonLineRegex.FindAllStringSubmatch(line, -1)[0]
 	}
 
-	return None, []string{}
+	return
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/farzadmf/termask/pkg/mask"
 	"github.com/farzadmf/termask/pkg/match"
@@ -45,6 +46,20 @@ var (
 				masker.Mask(mask.NewConfig(os.Stdin, os.Stdout))
 
 				return nil
+			case "json":
+				m := match.NewJSONMatcher()
+				names, matches := m.Hello(`"prop": "value"`)
+				for i := 0; i < len(names); i++ {
+					fmt.Println("name", names[i])
+					if names[i] == "value" {
+						matches[i] = "***"
+					}
+				}
+
+				fmt.Println(strings.Join(matches[1:], ""))
+
+				return nil
+
 			default:
 				return cli.NewExitError(fmt.Sprintf("unknown mode: %q", mode), 1)
 			}

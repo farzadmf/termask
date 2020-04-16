@@ -2,7 +2,7 @@ package match
 
 // Matcher is used to match a line against a pattern
 type Matcher interface {
-	Match(line string) (int, []string)
+	Match(line string) (groupNames, matches []string)
 }
 
 // These values tell us what we matched against
