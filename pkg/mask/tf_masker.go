@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	matcher "github.com/farzadmf/termask/pkg/match"
 )
 
 const (
-	tfNewOrRemovedProp = "( +)( *?[+-] *?)( +)"
-	tfChangedProp      = "( +)( *?[~] *?)( +)"
-	tfRemovedProp      = "( +)( *?[-] *?)( +)"
+	tfNewOrRemovedProp = "( +[+-] +)"
+	tfChangedProp      = "( +~ +)"
+	tfRemovedProp      = "( +- +)"
 
-	tfValue           = "([\"<])(?P<value>.*?)([>\"])"
-	tfPropEquals      = "(?P<prop>[\"a-zA-Z0-9%._-]+)( +)(=)( +)"
-	tfValueChange     = "( +)(->)( +)"
+	tfValue           = `(")(?P<value>[a-zA-Z0-9%._-]+)(")`
+	tfChangedValue    = `(")(?P<changed_value>[a-zA-Z0-9%._-]+)(")`
+	tfPropEquals      = "(?P<prop>[a-zA-Z0-9%._-]+)( += +)"
+	tfValueChange     = "( +-> +)"
 	tfComment         = "( +[#].*)*"
 	tfNull            = "(null)"
 	tfKnownAfterApply = "(\\(known after apply\\))"
@@ -24,7 +23,7 @@ const (
 
 var (
 	tfNewOrRemoveStr            = fmt.Sprintf("^%s%s%s$", tfNewOrRemovedProp, tfPropEquals, tfValue)
-	tfReplaceStr                = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfValue, tfComment)
+	tfReplaceStr                = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfChangedValue, tfComment)
 	tfReplaceKnownAfterApplyStr = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfKnownAfterApply, tfComment)
 	tfRemoveToNullStr           = fmt.Sprintf("^%s%s%s%s%s$", tfRemovedProp, tfPropEquals, tfValue, tfValueChange, tfNull)
 
@@ -36,14 +35,12 @@ var (
 
 // TFMasker reads from its reader, and masks lines matched by the matcher
 type TFMasker struct {
-	matcher    matcher.Matcher
 	propsRegex *regexp.Regexp
 }
 
 // NewTFMasker creates a new masker using the specified reader and matcher
-func NewTFMasker(m matcher.Matcher, props []string, ignoreCase bool) TFMasker {
+func NewTFMasker(props []string, ignoreCase bool) TFMasker {
 	return TFMasker{
-		matcher:    m,
 		propsRegex: regexp.MustCompile(getMaskedPropStr(props, ignoreCase)),
 	}
 }
@@ -52,131 +49,55 @@ func NewTFMasker(m matcher.Matcher, props []string, ignoreCase bool) TFMasker {
 func (m TFMasker) Mask(config Config) {
 	scanner := bufio.NewScanner(config.Reader)
 	for scanner.Scan() {
-		// line := scanner.Text()
+		line := scanner.Text()
+		var matches []string
 
-		// names := jsonLineRegex.SubexpNames()
-		// matches := jsonLineRegex.FindAllStringSubmatch(line, -1)[0]
+		if tfNewOrRemoveRegex.MatchString(line) {
+			names := tfNewOrRemoveRegex.SubexpNames()
+			matches = tfNewOrRemoveRegex.FindAllStringSubmatch(line, -1)[0]
 
-		// -------------------
+			m.maskPropAndValue(matches, names)
+		} else if tfReplaceRegex.MatchString(line) {
+			names := tfReplaceRegex.SubexpNames()
+			matches = tfReplaceRegex.FindAllStringSubmatch(line, -1)[0]
 
-		// match, matches := m.matcher.Match(line)
+			m.maskPropAndValues(matches, names)
+		} else if tfReplaceKnownAfterApplyRegex.MatchString(line) {
+			names := tfReplaceKnownAfterApplyRegex.SubexpNames()
+			matches = tfReplaceKnownAfterApplyRegex.FindAllStringSubmatch(line, -1)[0]
 
-		// switch match {
-		// case matcher.TFNewOrRemove:
-		// 	fmt.Fprintln(config.Writer, m.maskNewOrRemove(matches))
-		// case matcher.TFReplace:
-		// 	fmt.Fprintln(config.Writer, m.maskReplace(matches))
-		// case matcher.TFReplaceKnownAfterApply:
-		// 	fmt.Fprintln(config.Writer, m.maskKnownAfterApply(matches))
-		// case matcher.TFRemoveToNull:
-		// 	fmt.Fprintln(config.Writer, m.maskRemoveToNull(matches))
-		// case matcher.None:
-		// 	fmt.Fprintln(config.Writer, line)
-		// }
+			m.maskPropAndValue(matches, names)
+		} else if tfRemoveToNullRegex.MatchString(line) {
+			names := tfRemoveToNullRegex.SubexpNames()
+			matches = tfRemoveToNullRegex.FindAllStringSubmatch(line, -1)[0]
+
+			m.maskPropAndValue(matches, names)
+		}
+
+		if len(matches) > 0 {
+			line = strings.Join(matches[1:], "")
+		}
+
+		fmt.Fprintln(config.Writer, line)
 	}
 }
 
-// maskNewOrRemove masks a property value when a resource is being removed or added
-func (m TFMasker) maskNewOrRemove(matches []string) string {
-	leadingWhitespace := matches[1]
-	plus := matches[2]
-	spaceAfterPlus := matches[3]
-	property := matches[4]
-	spaceBeforeEqual := matches[5]
-	spaceAfterEqual := matches[6]
-	firstQuote := matches[7]
-	value := matches[8]
-	secondQuote := matches[9]
+func (m TFMasker) maskPropAndValue(matches, names []string) {
+	propIndex := getGroupIndex(names, "prop")
+	valueIndex := getGroupIndex(names, "value")
 
-	if m.propsRegex.MatchString(property) {
-		value = strings.Repeat("*", 3)
+	if m.propsRegex.MatchString(matches[propIndex]) {
+		matches[valueIndex] = "***"
 	}
-
-	return fmt.Sprintf("%s%s%s%s%s=%s%s%s%s",
-		leadingWhitespace, plus, spaceAfterPlus, property, spaceBeforeEqual,
-		spaceAfterEqual, firstQuote, value, secondQuote,
-	)
 }
 
-// maskReplace masks a property value when a resource is being replaced
-func (m TFMasker) maskReplace(matches []string) string {
-	leadingWhitespace := matches[1]
-	plus := matches[2]
-	spaceAfterPlus := matches[3]
-	property := matches[4]
-	spaceBeforeEqual := matches[5]
-	spaceAfterEqual := matches[6]
-	firstQuote := matches[7]
-	value := matches[8]
-	secondQuote := matches[9]
-	spaceBeforeArrow := matches[10]
-	spaceAfterArrow := matches[11]
-	changeFirstQuote := matches[12]
-	changeValue := matches[13]
-	changeSecondQuote := matches[14]
-	comment := matches[15]
+func (m TFMasker) maskPropAndValues(matches, names []string) {
+	propIndex := getGroupIndex(names, "prop")
+	valueIndex := getGroupIndex(names, "value")
+	changedValueIndex := getGroupIndex(names, "changedValue")
 
-	if m.propsRegex.MatchString(property) {
-		value = strings.Repeat("*", 3)
-		changeValue = strings.Repeat("*", 3)
+	if m.propsRegex.MatchString(matches[propIndex]) {
+		matches[valueIndex] = "***"
+		matches[changedValueIndex] = "***"
 	}
-
-	return fmt.Sprintf("%s%s%s%s%s=%s%s%s%s%s->%s%s%s%s%s",
-		leadingWhitespace, plus, spaceAfterPlus, property, spaceBeforeEqual,
-		spaceAfterEqual, firstQuote, value, secondQuote, spaceBeforeArrow,
-		spaceAfterArrow, changeFirstQuote, changeValue, changeSecondQuote, comment,
-	)
-}
-
-// maskKnownAfterApply takes care of masking values when we have '... -> (known after apply)'
-func (m TFMasker) maskKnownAfterApply(matches []string) string {
-	leadingWhitespace := matches[1]
-	plus := matches[2]
-	spaceAfterPlus := matches[3]
-	property := matches[4]
-	spaceBeforeEqual := matches[5]
-	spaceAfterEqual := matches[6]
-	firstQuote := matches[7]
-	value := matches[8]
-	secondQuote := matches[9]
-	spaceBeforeArrow := matches[10]
-	spaceAfterArrow := matches[11]
-	knownAfterApply := matches[12]
-	comment := matches[13]
-
-	if m.propsRegex.MatchString(property) {
-		value = strings.Repeat("*", 3)
-	}
-
-	return fmt.Sprintf("%s%s%s%s%s=%s%s%s%s%s->%s%s%s",
-		leadingWhitespace, plus, spaceAfterPlus, property, spaceBeforeEqual,
-		spaceAfterEqual, firstQuote, value, secondQuote, spaceBeforeArrow,
-		spaceAfterArrow, knownAfterApply, comment,
-	)
-}
-
-// maskRemoveToNull masks values when a resource begin removed and we have '... -> null'
-func (m TFMasker) maskRemoveToNull(matches []string) string {
-	leadingWhitespace := matches[1]
-	plus := matches[2]
-	spaceAfterPlus := matches[3]
-	property := matches[4]
-	spaceBeforeEqual := matches[5]
-	spaceAfterEqual := matches[6]
-	firstQuote := matches[7]
-	value := matches[8]
-	secondQuote := matches[9]
-	spaceBeforeArrow := matches[10]
-	spaceAfterArrow := matches[11]
-	null := matches[12]
-
-	if m.propsRegex.MatchString(property) {
-		value = strings.Repeat("*", 3)
-	}
-
-	return fmt.Sprintf("%s%s%s%s%s=%s%s%s%s%s->%s%s",
-		leadingWhitespace, plus, spaceAfterPlus, property, spaceBeforeEqual,
-		spaceAfterEqual, firstQuote, value, secondQuote, spaceBeforeArrow,
-		spaceAfterArrow, null,
-	)
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/farzadmf/termask/pkg/mask"
-	"github.com/farzadmf/termask/pkg/match"
 	"github.com/urfave/cli/v2"
 )
 
@@ -42,8 +41,7 @@ var (
 
 			switch mode {
 			case "tf":
-				m := match.NewTFMatcher()
-				masker := mask.NewTFMasker(m, properties, ignoreCase)
+				masker := mask.NewTFMasker(properties, ignoreCase)
 				masker.Mask(config)
 
 				return nil
