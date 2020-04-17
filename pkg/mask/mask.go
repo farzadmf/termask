@@ -17,3 +17,8 @@ func NewConfig(r io.Reader, w io.Writer) Config {
 		Writer: w,
 	}
 }
+
+// Masker receives a reader and a writer; reads from the reader and writes masked output to the writer
+type Masker interface {
+	Mask(config Config)
+}

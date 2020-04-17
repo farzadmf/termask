@@ -9,41 +9,56 @@ import (
 	matcher "github.com/farzadmf/termask/pkg/match"
 )
 
-// Masker reads from its reader, and masks lines matched by the matcher
-type Masker struct {
-	MaskedProps []string
+const (
+	tfNewOrRemovedProp = "( +)( *?[+-] *?)( +)"
+	tfChangedProp      = "( +)( *?[~] *?)( +)"
+	tfRemovedProp      = "( +)( *?[-] *?)( +)"
 
+	tfValue           = "([\"<])(?P<value>.*?)([>\"])"
+	tfPropEquals      = "(?P<prop>[\"a-zA-Z0-9%._-]+)( +)(=)( +)"
+	tfValueChange     = "( +)(->)( +)"
+	tfComment         = "( +[#].*)*"
+	tfNull            = "(null)"
+	tfKnownAfterApply = "(\\(known after apply\\))"
+)
+
+var (
+	tfNewOrRemoveStr            = fmt.Sprintf("^%s%s%s$", tfNewOrRemovedProp, tfPropEquals, tfValue)
+	tfReplaceStr                = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfValue, tfComment)
+	tfReplaceKnownAfterApplyStr = fmt.Sprintf("^%s%s%s%s%s%s$", tfChangedProp, tfPropEquals, tfValue, tfValueChange, tfKnownAfterApply, tfComment)
+	tfRemoveToNullStr           = fmt.Sprintf("^%s%s%s%s%s$", tfRemovedProp, tfPropEquals, tfValue, tfValueChange, tfNull)
+
+	tfNewOrRemoveRegex            = regexp.MustCompile(tfNewOrRemoveStr)
+	tfReplaceRegex                = regexp.MustCompile(tfReplaceStr)
+	tfReplaceKnownAfterApplyRegex = regexp.MustCompile(tfReplaceKnownAfterApplyStr)
+	tfRemoveToNullRegex           = regexp.MustCompile(tfRemoveToNullStr)
+)
+
+// TFMasker reads from its reader, and masks lines matched by the matcher
+type TFMasker struct {
 	matcher    matcher.Matcher
 	propsRegex *regexp.Regexp
 }
 
-// NewMasker creates a new masker using the specified reader and matcher
-func NewMasker(m matcher.Matcher, props []string, ignoreCase bool) Masker {
-	masked := "((?i).*password)"
-
-	if len(props) > 0 {
-		var caseString string
-		if ignoreCase {
-			caseString = "(?i)"
-		} else {
-			caseString = "(?-i)"
-		}
-		masked = fmt.Sprintf("^(%s|%s%s)$", masked, caseString, strings.Join(props, "|"))
-	}
-
-	masker := Masker{
+// NewTFMasker creates a new masker using the specified reader and matcher
+func NewTFMasker(m matcher.Matcher, props []string, ignoreCase bool) TFMasker {
+	return TFMasker{
 		matcher:    m,
-		propsRegex: regexp.MustCompile(masked),
+		propsRegex: regexp.MustCompile(getMaskedPropStr(props, ignoreCase)),
 	}
-
-	return masker
 }
 
 // Mask scans the reader line by line and prints masked/unmasked output to the writer
-func (m Masker) Mask(config Config) {
+func (m TFMasker) Mask(config Config) {
 	scanner := bufio.NewScanner(config.Reader)
 	for scanner.Scan() {
 		// line := scanner.Text()
+
+		// names := jsonLineRegex.SubexpNames()
+		// matches := jsonLineRegex.FindAllStringSubmatch(line, -1)[0]
+
+		// -------------------
+
 		// match, matches := m.matcher.Match(line)
 
 		// switch match {
@@ -62,7 +77,7 @@ func (m Masker) Mask(config Config) {
 }
 
 // maskNewOrRemove masks a property value when a resource is being removed or added
-func (m Masker) maskNewOrRemove(matches []string) string {
+func (m TFMasker) maskNewOrRemove(matches []string) string {
 	leadingWhitespace := matches[1]
 	plus := matches[2]
 	spaceAfterPlus := matches[3]
@@ -84,7 +99,7 @@ func (m Masker) maskNewOrRemove(matches []string) string {
 }
 
 // maskReplace masks a property value when a resource is being replaced
-func (m Masker) maskReplace(matches []string) string {
+func (m TFMasker) maskReplace(matches []string) string {
 	leadingWhitespace := matches[1]
 	plus := matches[2]
 	spaceAfterPlus := matches[3]
@@ -114,7 +129,7 @@ func (m Masker) maskReplace(matches []string) string {
 }
 
 // maskKnownAfterApply takes care of masking values when we have '... -> (known after apply)'
-func (m Masker) maskKnownAfterApply(matches []string) string {
+func (m TFMasker) maskKnownAfterApply(matches []string) string {
 	leadingWhitespace := matches[1]
 	plus := matches[2]
 	spaceAfterPlus := matches[3]
@@ -141,7 +156,7 @@ func (m Masker) maskKnownAfterApply(matches []string) string {
 }
 
 // maskRemoveToNull masks values when a resource begin removed and we have '... -> null'
-func (m Masker) maskRemoveToNull(matches []string) string {
+func (m TFMasker) maskRemoveToNull(matches []string) string {
 	leadingWhitespace := matches[1]
 	plus := matches[2]
 	spaceAfterPlus := matches[3]

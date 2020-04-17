@@ -38,25 +38,18 @@ var (
 			ignoreCase := c.Bool("i")
 			properties := c.StringSlice("p")
 
+			config := mask.NewConfig(os.Stdin, os.Stdout)
+
 			switch mode {
 			case "tf":
 				m := match.NewTFMatcher()
-				masker := mask.NewMasker(m, properties, ignoreCase)
-				masker.Mask(mask.NewConfig(os.Stdin, os.Stdout))
+				masker := mask.NewTFMasker(m, properties, ignoreCase)
+				masker.Mask(config)
 
 				return nil
 			case "json":
-				m := match.NewJSONMatcher()
-				propIndex, valueIndex, matches := m.Match(`"prop": "value"`)
-				fmt.Println(propIndex, valueIndex, matches)
-				// for i := 0; i < len(names); i++ {
-				// 	fmt.Println("name", names[i])
-				// 	if names[i] == "value" {
-				// 		matches[i] = "***"
-				// 	}
-				// }
-
-				// fmt.Println(strings.Join(matches[1:], ""))
+				masker := mask.NewJSONMasker(properties, ignoreCase)
+				masker.Mask(config)
 
 				return nil
 
