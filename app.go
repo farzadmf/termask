@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/farzadmf/termask/pkg/mask"
-	"github.com/farzadmf/termask/pkg/match"
 	"github.com/urfave/cli/v2"
 )
 
@@ -38,13 +37,20 @@ var (
 			ignoreCase := c.Bool("i")
 			properties := c.StringSlice("p")
 
+			config := mask.NewConfig(os.Stdin, os.Stdout)
+
 			switch mode {
 			case "tf":
-				m := match.NewTFMatcher()
-				masker := mask.NewMasker(m, properties, ignoreCase)
-				masker.Mask(mask.NewConfig(os.Stdin, os.Stdout))
+				masker := mask.NewTFMasker(properties, ignoreCase)
+				masker.Mask(config)
 
 				return nil
+			case "json":
+				masker := mask.NewJSONMasker(properties, ignoreCase)
+				masker.Mask(config)
+
+				return nil
+
 			default:
 				return cli.NewExitError(fmt.Sprintf("unknown mode: %q", mode), 1)
 			}
