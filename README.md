@@ -5,6 +5,7 @@ A utility to mask property values in the terminal
 It supports different inputs:
 
 - Terraform (v0.12)
+- JSON
 
 ## Introduction
 
@@ -108,3 +109,44 @@ Which will result in the following output:
     ...
 }
 ```
+
+### JSON
+
+We have a simialr concept for JSON input. Let's say you a file named `my.json` with the following content:
+
+```json
+{
+  "password": "secret",
+  "property": "value",
+  "name": "John"
+}
+
+Since, by default, `password` is masked, if you run this:
+
+```bash
+cat my.json | termask -m json
+```
+
+you would see the following output:
+
+```json
+{
+  "password": "***",
+  "property": "value",
+  "name": "John"
+}
+
+And, you can choose to mask other properties:
+
+```bash
+cat my.json | termask -m json -p name
+```
+
+Gives you:
+
+```json
+{
+  "password": "***",
+  "property": "value",
+  "name": "***"
+}
