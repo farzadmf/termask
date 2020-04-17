@@ -30,6 +30,42 @@ func TestJSONMask(t *testing.T) {
 			t.Errorf("property 'prop' should be masked; got '%s'", output)
 		}
 	})
+
+	t.Run("multi-line string", func(t *testing.T) {
+		t.Run("should mask specified property", func(t *testing.T) {
+			masker := NewJSONMasker([]string{"prop"}, false)
+			input := `{
+  "prop": "value",
+  "otherProp": "otherValue"
+}`
+
+			expected := `{
+  "prop": "***",
+  "otherProp": "otherValue"
+}`
+			output := getMaskOutputTrimmed(t, masker, input)
+			if output != expected {
+				t.Errorf("specified property was not masked, expected '%s', got '%s'", expected, output)
+			}
+		})
+
+		t.Run("should not mask unspecified properties", func(t *testing.T) {
+			masker := NewJSONMasker([]string{}, false)
+			input := `{
+  "prop": "value",
+  "otherProp": "otherValue"
+}`
+
+			expected := `{
+  "prop": "value",
+  "otherProp": "otherValue"
+}`
+			output := getMaskOutputTrimmed(t, masker, input)
+			if output != expected {
+				t.Errorf("specified property was not masked, expected '%s', got '%s'", expected, output)
+			}
+		})
+	})
 }
 
 func getMaskOutputTrimmed(t *testing.T, masker Masker, input string) string {

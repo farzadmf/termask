@@ -6,7 +6,7 @@ import (
 )
 
 func getMaskedPropStr(props []string, ignoreCase bool) string {
-	masked := "((?i).*password)"
+	masked := "(?i).*password"
 
 	if len(props) > 0 {
 		var caseString string
@@ -15,7 +15,7 @@ func getMaskedPropStr(props []string, ignoreCase bool) string {
 		} else {
 			caseString = "(?-i)"
 		}
-		masked = fmt.Sprintf("^(%s|%s%s)$", masked, caseString, strings.Join(props, "|"))
+		masked = fmt.Sprintf("%s|%s%s", masked, caseString, strings.Join(props, "|"))
 	}
 
 	return masked
