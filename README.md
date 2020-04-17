@@ -120,6 +120,7 @@ We have a simialr concept for JSON input. Let's say you a file named `my.json` w
   "property": "value",
   "name": "John"
 }
+```
 
 Since, by default, `password` is masked, if you run this:
 
@@ -135,6 +136,7 @@ you would see the following output:
   "property": "value",
   "name": "John"
 }
+```
 
 And, you can choose to mask other properties:
 
@@ -150,3 +152,4 @@ Gives you:
   "property": "value",
   "name": "***"
 }
+```
