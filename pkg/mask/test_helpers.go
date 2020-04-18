@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func getMaskOutputTrimmed(t *testing.T, masker Masker, input string) string {
+func getMaskOutput(t *testing.T, masker Masker, input string) string {
 	t.Helper()
 
 	output := bytes.Buffer{}
@@ -16,5 +16,13 @@ func getMaskOutputTrimmed(t *testing.T, masker Masker, input string) string {
 	}
 
 	masker.Mask(config)
-	return strings.TrimSpace(output.String())
+	return output.String()
+}
+
+func assertMatch(t *testing.T, got, expected string) {
+	t.Helper()
+
+	if got != expected {
+		t.Errorf("expected '%s', got '%s'", expected, got)
+	}
 }

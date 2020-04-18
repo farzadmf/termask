@@ -5,51 +5,67 @@ import (
 )
 
 func TestMask(t *testing.T) {
-	t.Run("should mask 'password' by default", func(t *testing.T) {
-		masker := NewTFMasker([]string{}, false)
-		output := getMaskOutputTrimmed(t, masker, ` + password = "value"`)
-		if output != `+ password = "***"` {
-			t.Errorf("'password' value was not masked; got '%s'", output)
-		}
+	t.Run("new resource", func(t *testing.T) {
+		t.Run("should mask 'password' by default", func(t *testing.T) {
+			masker := NewTFMasker([]string{}, false)
+			got := getMaskOutput(t, masker, ` + password = "value"`)
+			expected := ` + password = "***"` + "\n"
+			assertMatch(t, got, expected)
+		})
+
+		t.Run("should mask 'PaSSworD' by default", func(t *testing.T) {
+			masker := NewTFMasker([]string{}, false)
+			got := getMaskOutput(t, masker, ` + PaSSworD = "value"`)
+			expected := ` + PaSSworD = "***"` + "\n"
+			assertMatch(t, got, expected)
+		})
+
+		t.Run("should mask 'My_PassWord' by default", func(t *testing.T) {
+			masker := NewTFMasker([]string{}, false)
+			got := getMaskOutput(t, masker, ` + My_PassWord = "value"`)
+			expected := ` + My_PassWord = "***"` + "\n"
+			assertMatch(t, got, expected)
+		})
+
+		t.Run("should mask custom property case sensitive", func(t *testing.T) {
+			masker := NewTFMasker([]string{"my_prop"}, false)
+			got := getMaskOutput(t, masker, ` + my_prop = "value"`)
+			expected := ` + my_prop = "***"` + "\n"
+			assertMatch(t, got, expected)
+		})
+
+		t.Run("should mask custom property ignoring case", func(t *testing.T) {
+			masker := NewTFMasker([]string{"my_prop"}, true)
+			got := getMaskOutput(t, masker, ` + My_PrOP = "value"`)
+			expected := ` + My_PrOP = "***"` + "\n"
+			assertMatch(t, got, expected)
+		})
+
+		t.Run("should not mask when property doesn't match", func(t *testing.T) {
+			masker := NewTFMasker([]string{"my_prop"}, true)
+			got := getMaskOutput(t, masker, ` + other_prop = "value"`)
+			expected := ` + other_prop = "value"` + "\n"
+			assertMatch(t, got, expected)
+		})
 	})
 
-	t.Run("should mask 'PaSSworD' by default", func(t *testing.T) {
-		masker := NewTFMasker([]string{}, false)
-		output := getMaskOutputTrimmed(t, masker, ` + PaSSworD = "value"`)
-		if output != `+ PaSSworD = "***"` {
-			t.Errorf("'PaSSworD' value was not masked; got '%s'", output)
-		}
-	})
+	t.Run("multi-line new resource", func(t *testing.T) {
+		t.Run("should mask property containing 'password' by default", func(t *testing.T) {
+			masker := NewTFMasker([]string{}, false)
+			input := `
+  + resource "new_resource" {
+  + prop        = "value"
+  + my_password = "secret"
+}`
 
-	t.Run("should mask 'My_PassWord' by default", func(t *testing.T) {
-		masker := NewTFMasker([]string{}, false)
-		trimmedOutput := getMaskOutputTrimmed(t, masker, ` + My_PassWord = "value"`)
-		if trimmedOutput != `+ My_PassWord = "***"` {
-			t.Errorf("'My_PassWord' value was not masked; got '%s'", trimmedOutput)
-		}
-	})
-
-	t.Run("should mask custom property case sensitive", func(t *testing.T) {
-		masker := NewTFMasker([]string{"my_prop"}, false)
-		trimmedOutput := getMaskOutputTrimmed(t, masker, ` + my_prop = "value"`)
-		if trimmedOutput != `+ my_prop = "***"` {
-			t.Errorf("did not mask custom property; got '%s'", trimmedOutput)
-		}
-	})
-
-	t.Run("should mask custom property ignoring case", func(t *testing.T) {
-		masker := NewTFMasker([]string{"my_prop"}, true)
-		trimmedOutput := getMaskOutputTrimmed(t, masker, ` + My_PrOP = "value"`)
-		if trimmedOutput != `+ My_PrOP = "***"` {
-			t.Errorf("did not mask custom property, case insensitive; got '%s'", trimmedOutput)
-		}
-	})
-
-	t.Run("should not mask when property doesn't match", func(t *testing.T) {
-		masker := NewTFMasker([]string{"my_prop"}, true)
-		trimmedOutput := getMaskOutputTrimmed(t, masker, ` + other_prop = "value"`)
-		if trimmedOutput != `+ other_prop = "value"` {
-			t.Errorf("did not print property as is when no match; got '%s'", trimmedOutput)
-		}
+			expected := `
+  + resource "new_resource" {
+  + prop        = "value"
+  + my_password = "***"
+}
+`
+			got := getMaskOutput(t, masker, input)
+			assertMatch(t, got, expected)
+		})
 	})
 }

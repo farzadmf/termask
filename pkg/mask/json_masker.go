@@ -49,5 +49,5 @@ func (m JSONMasker) Mask(config Config) {
 	}
 
 	inputStr = m.jsonLineRegex.ReplaceAllString(inputStr, strings.Join(replaceGroups, ""))
-	fmt.Fprintln(config.Writer, inputStr)
+	fmt.Fprint(config.Writer, inputStr)
 }
