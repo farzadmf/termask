@@ -47,40 +47,52 @@ func (m *TFMasker) Mask(config Config) {
 	fmt.Fprint(config.Writer, output)
 }
 
-func (m *TFMasker) buildReplaceInfo() {
-	replace := `( +~ +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")` +
-		`( +-> +)(")(?P<changed_value>[a-zA-Z0-9%._-]+)(")( +[#].*)*`
-
-	regex, groups := buildInfo(replace, m.propsStr, "value", "changed_value")
-
-	m.replaceRegex = regex
-	m.replaceGroups = groups
-}
-
 func (m *TFMasker) buildNewRemoveInfo() {
-	newRemovePattern := `( +[+-] +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")`
+	newRemovePattern := fmt.Sprintf(
+		`(?m)^( +[+-] +)(?P<prop>%s)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")$`,
+		m.propsStr,
+	)
 
-	regex, groups := buildInfo(newRemovePattern, m.propsStr, "value")
+	regex, groups := buildInfo(newRemovePattern, []string{"value"})
 
 	m.newRemoveRegex = regex
 	m.newRemoveGroups = groups
 }
 
-func (m *TFMasker) buildReplaceKnownAfterInfo() {
-	replaceKnownAfterPattern := `( +~ +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")` +
-		`( +-> +)(\\(known after apply\\))( +[#].*)*`
-
-	regex, groups := buildInfo(replaceKnownAfterPattern, m.propsStr, "value")
-
-	m.replaceKnownAfterRegex = regex
-	m.replaceKnownAfterGroups = groups
-}
-
 func (m *TFMasker) buildRemoveToNullInfo() {
-	removeToNullPattern := `( +- +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")( +-> +)(null)`
+	removeToNullPattern := fmt.Sprintf(
+		`(?m)^( +- +)(?P<prop>%s)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")( +-> +)(null)$`,
+		m.propsStr,
+	)
 
-	regex, groups := buildInfo(removeToNullPattern, m.propsStr, "value")
+	regex, groups := buildInfo(removeToNullPattern, []string{"value"})
 
 	m.removeNullRegex = regex
 	m.removeToNullGroups = groups
+}
+
+func (m *TFMasker) buildReplaceInfo() {
+	replace := fmt.Sprintf(
+		`(?m)^( +~ +)(?P<prop>%s)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")`+
+			`( +-> +)(")(?P<changed_value>[a-zA-Z0-9%%._-]+)(")( +[#].*)*$`,
+		m.propsStr,
+	)
+
+	regex, groups := buildInfo(replace, []string{"value", "changed_value"})
+
+	m.replaceRegex = regex
+	m.replaceGroups = groups
+}
+
+func (m *TFMasker) buildReplaceKnownAfterInfo() {
+	replaceKnownAfterPattern := fmt.Sprintf(
+		`(?m)^( +~ +)(?P<prop>%s)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")`+
+			`( +-> +)(\(known after apply\))( +[#].*)*$`,
+		m.propsStr,
+	)
+
+	regex, groups := buildInfo(replaceKnownAfterPattern, []string{"value"})
+
+	m.replaceKnownAfterRegex = regex
+	m.replaceKnownAfterGroups = groups
 }

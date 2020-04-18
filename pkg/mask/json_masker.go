@@ -33,9 +33,12 @@ func (m *JSONMasker) Mask(config Config) {
 }
 
 func (m *JSONMasker) buildLineInfo() {
-	linePattern := `(?m)^( *?)(")(?P<prop>PROPS)(")(:)( )(")(?P<value>[a-zA-Z0-9%._-]+)(")(.*)$`
+	linePattern := fmt.Sprintf(
+		`(?m)^( *?)(")(?P<prop>%s)(")(:)( )(")(?P<value>[a-zA-Z0-9%%._-]+)(")(.*)$`,
+		m.propsStr,
+	)
 
-	regex, groups := buildInfo(linePattern, m.propsStr, "value")
+	regex, groups := buildInfo(linePattern, []string{"value"})
 
 	m.lineRegex = regex
 	m.lineReplaceGroups = groups

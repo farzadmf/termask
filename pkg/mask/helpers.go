@@ -8,8 +8,7 @@ import (
 	"strings"
 )
 
-func buildInfo(pattern, propsStr string, maskedNames ...string) (regex *regexp.Regexp, replaceGroups string) {
-	pattern = strings.Replace(pattern, "PROPS", propsStr, -1)
+func buildInfo(pattern string, maskedNames []string) (regex *regexp.Regexp, replaceGroups string) {
 	regex = regexp.MustCompile(pattern)
 
 	names := regex.SubexpNames()
@@ -34,7 +33,7 @@ func getInput(reader io.Reader) string {
 }
 
 func getMaskedPropStr(props []string, ignoreCase bool) string {
-	masked := "(?i).*password"
+	masked := "(?i).*?password.*?"
 
 	if len(props) > 0 {
 		var caseString string
