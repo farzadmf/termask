@@ -5,56 +5,74 @@ import (
 )
 
 func TestJSONMask(t *testing.T) {
-	t.Run("should mask 'password' by default", func(t *testing.T) {
-		masker := NewJSONMasker([]string{}, false)
-		got := getMaskOutput(t, masker, `  "password": "secret"`)
-		expected := `  "password": "***"`
-		assertMatch(t, got, expected)
-	})
-
-	t.Run("should not mask an unspecified property", func(t *testing.T) {
-		masker := NewJSONMasker([]string{}, false)
-		got := getMaskOutput(t, masker, `  "prop": "value"`)
-		expected := `  "prop": "value"`
-		assertMatch(t, got, expected)
-	})
-
-	t.Run("should mask specified property", func(t *testing.T) {
-		masker := NewJSONMasker([]string{"prop"}, false)
-		got := getMaskOutput(t, masker, `  "prop": "value"`)
-		expected := `  "prop": "***"`
-		assertMatch(t, got, expected)
-	})
-
-	t.Run("multi-line string", func(t *testing.T) {
-		t.Run("should mask specified property", func(t *testing.T) {
-			masker := NewJSONMasker([]string{"prop"}, false)
-			input := `{
+	cases := []maskerTestCase{
+		{
+			description: "masks combinations of 'password' by default",
+			props:       []string{},
+			ignoreCase:  false,
+			input: `
+{
+  "password": "secret",
+  "myPassWOrd": "secret",
+  "mPassWORD2": "secret"
+}`,
+			want: `
+{
+  "password": "***",
+  "myPassWOrd": "***",
+  "mPassWORD2": "***"
+}`,
+		},
+		{
+			description: "prints input as is when no match",
+			props:       []string{},
+			ignoreCase:  false,
+			input: `
+{
   "prop": "value",
-  "otherProp": "otherValue"
-}`
-
-			expected := `{
+  "prop2": "value",
+}`,
+			want: `
+{
+  "prop": "value",
+  "prop2": "value",
+}`,
+		},
+		{
+			description: "masks 'password' and specified property (case sensitive)",
+			props:       []string{"prop"},
+			ignoreCase:  false,
+			input: `
+{
+  "prop": "value",
+  "PROP": "value",
+  "password": "secret"
+}`,
+			want: `
+{
   "prop": "***",
-  "otherProp": "otherValue"
-}`
-			got := getMaskOutput(t, masker, input)
-			assertMatch(t, got, expected)
-		})
-
-		t.Run("should not mask unspecified properties", func(t *testing.T) {
-			masker := NewJSONMasker([]string{}, false)
-			input := `{
+  "PROP": "value",
+  "password": "***"
+}`,
+		},
+		{
+			description: "masks combinations of specified property when ignoring case",
+			props:       []string{"prop"},
+			ignoreCase:  true,
+			input: `
+{
   "prop": "value",
-  "otherProp": "otherValue"
-}`
+  "PrOP": "value",
+  "prop2": "value"
+}`,
+			want: `
+{
+  "prop": "***",
+  "PrOP": "***",
+  "prop2": "value"
+}`,
+		},
+	}
 
-			expected := `{
-  "prop": "value",
-  "otherProp": "otherValue"
-}`
-			got := getMaskOutput(t, masker, input)
-			assertMatch(t, got, expected)
-		})
-	})
+	runJSONMaskerTests(t, cases)
 }

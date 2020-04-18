@@ -6,6 +6,42 @@ import (
 	"testing"
 )
 
+type maskerTestCase struct {
+	description string
+	props       []string
+	ignoreCase  bool
+	input       string
+	want        string
+}
+
+func runTFMaskerTests(t *testing.T, cases []maskerTestCase) {
+	t.Helper()
+
+	for _, test := range cases {
+		t.Run(test.description, func(t *testing.T) {
+			t.Helper()
+
+			masker := NewTFMasker(test.props, test.ignoreCase)
+			got := getMaskOutput(t, masker, test.input)
+			assertMatch(t, got, test.want)
+		})
+	}
+}
+
+func runJSONMaskerTests(t *testing.T, cases []maskerTestCase) {
+	t.Helper()
+
+	for _, test := range cases {
+		t.Run(test.description, func(t *testing.T) {
+			t.Helper()
+
+			masker := NewJSONMasker(test.props, test.ignoreCase)
+			got := getMaskOutput(t, masker, test.input)
+			assertMatch(t, got, test.want)
+		})
+	}
+}
+
 func getMaskOutput(t *testing.T, masker Masker, input string) string {
 	t.Helper()
 
@@ -19,10 +55,10 @@ func getMaskOutput(t *testing.T, masker Masker, input string) string {
 	return output.String()
 }
 
-func assertMatch(t *testing.T, got, expected string) {
+func assertMatch(t *testing.T, got, want string) {
 	t.Helper()
 
-	if got != expected {
-		t.Errorf("expected '%s', got '%s'", expected, got)
+	if got != want {
+		t.Errorf("wanted '%s', got '%s'", want, got)
 	}
 }
