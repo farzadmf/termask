@@ -5,34 +5,10 @@ import (
 	"regexp"
 )
 
-const (
-// a tfNewOrRemovedProp = "( +[+-] +)"
-// b tfChangedProp      = "( +~ +)"
-// c tfRemovedProp      = "( +- +)"
-
-// d tfValue        = `(")(?P<value>[a-zA-Z0-9%._-]+)(")`
-// e tfChangedValue = `(")(?P<changed_value>[a-zA-Z0-9%._-]+)(")`
-// tfPropEquals      = "(?P<prop>[a-zA-Z0-9%._-]+)( += +)"
-// f tfPropEquals      = "(?P<prop>PROPS)( += +)"
-// g tfValueChange     = "( +-> +)"
-// h tfComment         = "( +[#].*)*"
-// i tfNull            = "(null)"
-// j tfKnownAfterApply = "(\\(known after apply\\))"
-)
-
-var (
-	tfNewOrRemoveStr = `( +[+-] +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")`
-	tfReplaceStr     = `( +~ +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")` +
-		`( +-> +)(")(?P<changed_value>[a-zA-Z0-9%._-]+)(")( +[#].*)*`
-	tfReplaceKnownAfterApplyStr = `( +~ +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")` +
-		`( +-> +)(\\(known after apply\\))( +[#].*)*`
-	tfRemoveToNullStr = `( +- +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")( +-> +)(null)`
-)
-
 // TFMasker reads from its reader, and masks lines matched by the matcher
 type TFMasker struct {
 	propsStr string
-	// propsRegex                  *regexp.Regexp
+
 	newRemoveRegex         *regexp.Regexp
 	replaceRegex           *regexp.Regexp
 	replaceKnownAfterRegex *regexp.Regexp
@@ -48,7 +24,6 @@ type TFMasker struct {
 func NewTFMasker(props []string, ignoreCase bool) *TFMasker {
 	masker := TFMasker{
 		propsStr: getMaskedPropStr(props, ignoreCase),
-		// propsRegex: regexp.MustCompile(getMaskedPropStr(props, ignoreCase)),
 	}
 
 	masker.buildNewRemoveInfo()
@@ -57,6 +32,19 @@ func NewTFMasker(props []string, ignoreCase bool) *TFMasker {
 	masker.buildReplaceKnownAfterInfo()
 
 	return &masker
+}
+
+// Mask scans the reader line by line and prints masked/unmasked output to the writer
+func (m *TFMasker) Mask(config Config) {
+	input := getInput(config.Reader)
+
+	var output string
+	output = m.newRemoveRegex.ReplaceAllString(input, m.newRemoveGroups)
+	output = m.replaceRegex.ReplaceAllString(output, m.replaceGroups)
+	output = m.replaceKnownAfterRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
+	output = m.removeNullRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
+
+	fmt.Fprint(config.Writer, output)
 }
 
 func (m *TFMasker) buildReplaceInfo() {
@@ -89,97 +77,10 @@ func (m *TFMasker) buildReplaceKnownAfterInfo() {
 }
 
 func (m *TFMasker) buildRemoveToNullInfo() {
-	tfRemoveToNullStr = `( +- +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")( +-> +)(null)`
+	removeToNullPattern := `( +- +)(?P<prop>PROPS)( += +)(")(?P<value>[a-zA-Z0-9%._-]+)(")( +-> +)(null)`
 
-	regex, groups := buildInfo(tfNewOrRemoveStr, m.propsStr, "value")
+	regex, groups := buildInfo(removeToNullPattern, m.propsStr, "value")
 
 	m.removeNullRegex = regex
 	m.removeToNullGroups = groups
 }
-
-// Mask scans the reader line by line and prints masked/unmasked output to the writer
-func (m *TFMasker) Mask(config Config) {
-	input := getInput(config.Reader)
-
-	var output string
-	output = m.newRemoveRegex.ReplaceAllString(input, m.newRemoveGroups)
-	output = m.replaceRegex.ReplaceAllString(output, m.replaceGroups)
-	output = m.replaceKnownAfterRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
-	output = m.removeNullRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
-
-	fmt.Fprint(config.Writer, output)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// 	var matches []string
-
-	// 	if tfNewOrRemoveRegex.MatchString(line) {
-	// 		names := tfNewOrRemoveRegex.SubexpNames()
-	// 		matches = tfNewOrRemoveRegex.FindAllStringSubmatch(line, -1)[0]
-
-	// 		m.maskPropAndValue(matches, names)
-	// 	} else if tfReplaceRegex.MatchString(line) {
-	// 		names := tfReplaceRegex.SubexpNames()
-	// 		matches = tfReplaceRegex.FindAllStringSubmatch(line, -1)[0]
-
-	// 		m.maskPropAndValues(matches, names)
-	// 	} else if tfReplaceKnownAfterApplyRegex.MatchString(line) {
-	// 		names := tfReplaceKnownAfterApplyRegex.SubexpNames()
-	// 		matches = tfReplaceKnownAfterApplyRegex.FindAllStringSubmatch(line, -1)[0]
-
-	// 		m.maskPropAndValue(matches, names)
-	// 	} else if tfRemoveToNullRegex.MatchString(line) {
-	// 		names := tfRemoveToNullRegex.SubexpNames()
-	// 		matches = tfRemoveToNullRegex.FindAllStringSubmatch(line, -1)[0]
-
-	// 		m.maskPropAndValue(matches, names)
-	// 	}
-
-	// 	if len(matches) > 0 {
-	// 		line = strings.Join(matches[1:], "")
-	// 	}
-
-	// 	fmt.Fprintln(config.Writer, line)
-	// }
-}
-
-// func (m TFMasker) getNewOrRemoveReplaceGroups() string {
-// 	names := m.newOrRemoveRegex.SubexpNames()
-// 	valueIndex := getGroupIndex(names, "value")
-
-// 	maskedIndices := []int{}
-// 	var replaceGroups []string
-// 	for i := 1; i < len(names); i++ {
-// 		appended := false
-// 		for _, index := range maskedIndices {
-// 			if i == index {
-// 				replaceGroups = append(replaceGroups, "***")
-// 				appended = true
-// 				break
-// 			}
-// 		}
-// 		if !appended {
-// 			replaceGroups = append(replaceGroups, fmt.Sprintf("${%d}", i))
-// 		}
-// 	}
-// }
-
-// func (m TFMasker) maskPropAndValue(matches, names []string) {
-// 	propIndex := getGroupIndex(names, "prop")
-// 	valueIndex := getGroupIndex(names, "value")
-
-// 	if m.propsRegex.MatchString(matches[propIndex]) {
-// 		matches[valueIndex] = "***"
-// 	}
-// }
-
-// func (m TFMasker) maskPropAndValues(matches, names []string) {
-// 	propIndex := getGroupIndex(names, "prop")
-// 	valueIndex := getGroupIndex(names, "value")
-// 	changedValueIndex := getGroupIndex(names, "changedValue")
-
-// 	if m.propsRegex.MatchString(matches[propIndex]) {
-// 		matches[valueIndex] = "***"
-// 		matches[changedValueIndex] = "***"
-// 	}
-// }
