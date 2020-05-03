@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func buildInfo(pattern string, maskedNames []string) (regex *regexp.Regexp, replaceGroups string) {
+func buildRegexAndGroups(pattern string, maskedNames []string) (regex *regexp.Regexp, replaceGroups string) {
 	regex = regexp.MustCompile(pattern)
 
 	names := regex.SubexpNames()

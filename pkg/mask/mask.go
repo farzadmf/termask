@@ -4,6 +4,10 @@ import (
 	"io"
 )
 
+const (
+	valuePattern = `[a-zA-Z0-9%;=/._-]`
+)
+
 // Config is used to specify the reader to mask and writer to write the output
 type Config struct {
 	Reader io.Reader

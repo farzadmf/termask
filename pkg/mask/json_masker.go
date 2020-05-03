@@ -38,7 +38,7 @@ func (m *JSONMasker) buildLineInfo() {
 		m.propsStr,
 	)
 
-	regex, groups := buildInfo(linePattern, []string{"value"})
+	regex, groups := buildRegexAndGroups(linePattern, []string{"value"})
 
 	m.lineRegex = regex
 	m.lineReplaceGroups = groups

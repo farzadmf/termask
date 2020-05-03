@@ -23,7 +23,11 @@ func runTFMaskerTests(t *testing.T, cases []maskerTestCase) {
 			t.Helper()
 
 			masker := NewTFMasker(test.props, test.ignoreCase, test.partial)
+
 			got := getMaskOutput(t, masker, test.input)
+			// Remove the trailing newline to make writing test tables easier
+			got = strings.TrimRight(got, "\n")
+
 			assertMatch(t, got, test.want)
 		})
 	}

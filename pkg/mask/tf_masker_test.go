@@ -22,6 +22,11 @@ func TestMaskNewResource(t *testing.T) {
 			want:        ` + password2 = "***"`,
 		},
 		{
+			description: "masks 'pasword' by default when there is no plus sign",
+			input:       `password = "secret"`,
+			want:        `password = "***"`,
+		},
+		{
 			description: "masks 'myPassWORD' by default",
 			input:       ` + myPassWORD = "secret"`,
 			want:        ` + myPassWORD = "***"`,
@@ -70,6 +75,15 @@ func TestMaskNewResource(t *testing.T) {
 			input:       `   + "my_prop_partial" = "value"`,
 			want:        `   + "my_prop_partial" = "***"`,
 		},
+		{
+			description: "masks Azure connection string using partial match and ignore case",
+			props:       []string{"connectionstring"},
+			ignoreCase:  true,
+			partial:     true,
+			input: `"My__StorageAccountConnectionString"          = "DefaultEndpointsProtocol=https;` +
+				`AccountName=account;AccountKey=2S8/T4B4cquIjr6w==;EndpointSuffix=core.windows.net"`,
+			want: `"My__StorageAccountConnectionString"          = "***"`,
+		},
 	}
 
 	runTFMaskerTests(t, cases)
@@ -87,6 +101,16 @@ func TestMaskChangedResource(t *testing.T) {
 			input:       ` ~ "MyPassWorD2" = "secret" -> "new_secret"`,
 			want:        ` ~ "MyPassWorD2" = "***" -> "***"`,
 		},
+		{
+			description: "masks Azure connection string using partial match and ignore case",
+			props:       []string{"connectionstring"},
+			ignoreCase:  true,
+			partial:     true,
+			input: `~ "My__StorageAccountConnectionString"          = "DefaultEndpointsProtocol=https;` +
+				`AccountName=account;AccountKey=2S8/T4B4cquIjr6w==;EndpointSuffix=core.windows.net" -> ` +
+				`"Ac=ac;Key=2D5/==;End=windows.net"`,
+			want: `~ "My__StorageAccountConnectionString"          = "***" -> "***"`,
+		},
 	}
 
 	runTFMaskerTests(t, cases)
@@ -95,11 +119,15 @@ func TestMaskChangedResource(t *testing.T) {
 func TestMaskRemovedResource(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "masks 'password' and specified prop",
-			props:       []string{"prop"},
-			ignoreCase:  false,
+			description: "masks 'password' by default",
 			input:       ` - password = "secret" -> null`,
 			want:        ` - password = "***" -> null`,
+		},
+		{
+			description: "masks specified prop with more than one specified",
+			props:       []string{"prop", "my_prop"},
+			input:       ` + my_prop = "secret"`,
+			want:        ` + my_prop = "***"`,
 		},
 	}
 
@@ -109,23 +137,16 @@ func TestMaskRemovedResource(t *testing.T) {
 func TestMaskReplaceKnownAfterApply(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "masks 'password' and specified prop",
+			description: "masks 'My_Password_2' by default",
+			input:       ` ~ My_Password_2 = "secret" -> (known after apply)`,
+			want:        ` ~ My_Password_2 = "***" -> (known after apply)`,
+		},
+		{
+			description: "masks specified prop when matched partially",
 			props:       []string{"prop"},
-			ignoreCase:  false,
-			input: `
-~ resource "known_after_resource" {
-  ~ prop      = "value" -> (known after apply)       # comment
-  ~ prop2     = "value2" -> (known after apply)     # comment
-  ~ password  = "secret" -> (known after apply)
-  ~ password2 = "secret2" -> (known after apply)   # with comment
-}`,
-			want: `
-~ resource "known_after_resource" {
-  ~ prop      = "***" -> (known after apply)       # comment
-  ~ prop2     = "value2" -> (known after apply)     # comment
-  ~ password  = "***" -> (known after apply)
-  ~ password2 = "***" -> (known after apply)   # with comment
-}`,
+			partial:     true,
+			input:       ` ~ prop_value = "secret" -> (known after apply)`,
+			want:        ` ~ prop_value = "***" -> (known after apply)`,
 		},
 	}
 
