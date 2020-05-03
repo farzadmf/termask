@@ -13,9 +13,9 @@ type JSONMasker struct {
 }
 
 // NewJSONMasker creates a new JSON masker
-func NewJSONMasker(props []string, ignoreCase bool) *JSONMasker {
+func NewJSONMasker(props []string, ignoreCase bool, partial bool) *JSONMasker {
 	masker := JSONMasker{
-		propsStr: getMaskedPropStr(props, ignoreCase),
+		propsStr: getMaskedPropStr(props, ignoreCase, partial),
 	}
 
 	masker.buildLineInfo()
@@ -38,7 +38,7 @@ func (m *JSONMasker) buildLineInfo() {
 		m.propsStr,
 	)
 
-	regex, groups := buildInfo(linePattern, []string{"value"})
+	regex, groups := buildRegexAndGroups(linePattern, []string{"value"})
 
 	m.lineRegex = regex
 	m.lineReplaceGroups = groups

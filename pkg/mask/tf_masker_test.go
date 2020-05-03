@@ -7,70 +7,82 @@ import (
 func TestMaskNewResource(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "should mask different combinations of 'password' by default",
-			props:       []string{},
-			ignoreCase:  false,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + prop        = "value"
-  + my_password = "secret"
-  + password    = "secret"
-  + password2   = "secret"
-  + PasSWorD    = "secret"
-  + MyPassWORD2 = "SECRET"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + prop        = "value"
-  + my_password = "***"
-  + password    = "***"
-  + password2   = "***"
-  + PasSWorD    = "***"
-  + MyPassWORD2 = "***"
-}`,
+			description: "masks 'password' by default",
+			input:       ` + password = "secret"`,
+			want:        ` + password = "***"`,
 		},
 		{
-			description: "masks specified property (case sensitive)",
+			description: "masks 'PaSSWorD' by default",
+			input:       `+ PaSSWorD = "secret"`,
+			want:        `+ PaSSWorD = "***"`,
+		},
+		{
+			description: "masks 'password2' by default",
+			input:       ` + password2 = "secret"`,
+			want:        ` + password2 = "***"`,
+		},
+		{
+			description: "masks 'pasword' by default when there is no plus sign",
+			input:       `password = "secret"`,
+			want:        `password = "***"`,
+		},
+		{
+			description: "masks 'myPassWORD' by default",
+			input:       ` + myPassWORD = "secret"`,
+			want:        ` + myPassWORD = "***"`,
+		},
+		{
+			description: "masks specified property",
 			props:       []string{"my_prop"},
-			ignoreCase:  false,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-  + My_Prop     = "value2"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "***"
-  + My_Prop     = "value2"
-}`,
+			input:       ` + my_prop = "secret"`,
+			want:        ` + my_prop = "***"`,
 		},
 		{
-			description: "masks combinations of specified property when ignoring case",
+			description: "does not mask specified property when casing does not match",
+			props:       []string{"my_prop"},
+			input:       ` + My_Prop = "value"`,
+			want:        ` + My_Prop = "value"`,
+		},
+		{
+			description: "masks property ignoring case",
 			props:       []string{"my_prop"},
 			ignoreCase:  true,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-  + My_Prop     = "value2"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "***"
-  + My_Prop     = "***"
-}`,
+			input:       ` + My_Prop = "value"`,
+			want:        ` + My_Prop = "***"`,
 		},
 		{
-			description: "prints output as is when no match",
-			props:       []string{},
-			ignoreCase:  false,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-}`,
+			description: "does not mask when nothing matches",
+			input:       ` + my_prop = "value"`,
+			want:        ` + my_prop = "value"`,
+		},
+		{
+			description: "masks new prop with quotes",
+			props:       []string{"my_prop"},
+			input:       `   + "my_prop" = "value"`,
+			want:        `   + "my_prop" = "***"`,
+		},
+		{
+			// This is the case where this prop is a sub-section of a parent section being added
+			description: "masks new prop with quotes and no '+'",
+			props:       []string{"my_prop"},
+			input:       `  "my_prop" = "value"`,
+			want:        `  "my_prop" = "***"`,
+		},
+		{
+			description: "masks partially matched property",
+			props:       []string{"other_prop", "my_prop"},
+			partial:     true,
+			input:       `   + "my_prop_partial" = "value"`,
+			want:        `   + "my_prop_partial" = "***"`,
+		},
+		{
+			description: "masks Azure connection string using partial match and ignore case",
+			props:       []string{"connectionstring"},
+			ignoreCase:  true,
+			partial:     true,
+			input: `"My__StorageAccountConnectionString"          = "DefaultEndpointsProtocol=https;` +
+				`AccountName=account;AccountKey=2S8/T4B4cquIjr6w==;EndpointSuffix=core.windows.net"`,
+			want: `"My__StorageAccountConnectionString"          = "***"`,
 		},
 	}
 
@@ -80,40 +92,24 @@ func TestMaskNewResource(t *testing.T) {
 func TestMaskChangedResource(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "only masks props containing 'password' by default",
-			props:       []string{},
-			ignoreCase:  false,
-			input: `
-~ resource "changed_resource" {
-  ~ prop      = "value" -> "new_value"     # comment
-  ~ password  = "secret" -> "new_secret"
-  ~ password2 = "secret2" -> "new_secret2" # with comment
-}`,
-			want: `
-~ resource "changed_resource" {
-  ~ prop      = "value" -> "new_value"     # comment
-  ~ password  = "***" -> "***"
-  ~ password2 = "***" -> "***" # with comment
-}`,
+			description: "masks 'password' with comment",
+			input:       ` ~ password = "secret" -> "new_secret"   # comment`,
+			want:        ` ~ password = "***" -> "***"   # comment`,
 		},
 		{
-			description: "additionally masks specified prop",
-			props:       []string{"prop"},
-			ignoreCase:  false,
-			input: `
-~ resource "changed_resource" {
-  ~ prop      = "value" -> "new_value"       # comment
-  ~ prop2     = "value2" -> "new_value2"     # comment
-  ~ password  = "secret" -> "new_secret"
-  ~ password2 = "secret2" -> "new_secret2"   # with comment
-}`,
-			want: `
-~ resource "changed_resource" {
-  ~ prop      = "***" -> "***"       # comment
-  ~ prop2     = "value2" -> "new_value2"     # comment
-  ~ password  = "***" -> "***"
-  ~ password2 = "***" -> "***"   # with comment
-}`,
+			description: "masks 'MyPasWorD2' with quotes and without comment",
+			input:       ` ~ "MyPassWorD2" = "secret" -> "new_secret"`,
+			want:        ` ~ "MyPassWorD2" = "***" -> "***"`,
+		},
+		{
+			description: "masks Azure connection string using partial match and ignore case",
+			props:       []string{"connectionstring"},
+			ignoreCase:  true,
+			partial:     true,
+			input: `~ "My__StorageAccountConnectionString"          = "DefaultEndpointsProtocol=https;` +
+				`AccountName=account;AccountKey=2S8/T4B4cquIjr6w==;EndpointSuffix=core.windows.net" -> ` +
+				`"Ac=ac;Key=2D5/==;End=windows.net"`,
+			want: `~ "My__StorageAccountConnectionString"          = "***" -> "***"`,
 		},
 	}
 
@@ -123,23 +119,15 @@ func TestMaskChangedResource(t *testing.T) {
 func TestMaskRemovedResource(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "masks 'password' and specified prop",
-			props:       []string{"prop"},
-			ignoreCase:  false,
-			input: `
-- resource "removed_resource" {
-  - prop      = "value" -> null
-  - prop2     = "value2" -> null
-  - password  = "secret" -> null
-  - password2 = "secret2" -> null
-}`,
-			want: `
-- resource "removed_resource" {
-  - prop      = "***" -> null
-  - prop2     = "value2" -> null
-  - password  = "***" -> null
-  - password2 = "***" -> null
-}`,
+			description: "masks 'password' by default",
+			input:       ` - password = "secret" -> null`,
+			want:        ` - password = "***" -> null`,
+		},
+		{
+			description: "masks specified prop with more than one specified",
+			props:       []string{"prop", "my_prop"},
+			input:       ` + my_prop = "secret"`,
+			want:        ` + my_prop = "***"`,
 		},
 	}
 
@@ -149,23 +137,16 @@ func TestMaskRemovedResource(t *testing.T) {
 func TestMaskReplaceKnownAfterApply(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "masks 'password' and specified prop",
+			description: "masks 'My_Password_2' by default",
+			input:       ` ~ My_Password_2 = "secret" -> (known after apply)`,
+			want:        ` ~ My_Password_2 = "***" -> (known after apply)`,
+		},
+		{
+			description: "masks specified prop when matched partially",
 			props:       []string{"prop"},
-			ignoreCase:  false,
-			input: `
-~ resource "known_after_resource" {
-  ~ prop      = "value" -> (known after apply)       # comment
-  ~ prop2     = "value2" -> (known after apply)     # comment
-  ~ password  = "secret" -> (known after apply)
-  ~ password2 = "secret2" -> (known after apply)   # with comment
-}`,
-			want: `
-~ resource "known_after_resource" {
-  ~ prop      = "***" -> (known after apply)       # comment
-  ~ prop2     = "value2" -> (known after apply)     # comment
-  ~ password  = "***" -> (known after apply)
-  ~ password2 = "***" -> (known after apply)   # with comment
-}`,
+			partial:     true,
+			input:       ` ~ prop_value = "secret" -> (known after apply)`,
+			want:        ` ~ prop_value = "***" -> (known after apply)`,
 		},
 	}
 

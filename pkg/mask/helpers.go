@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func buildInfo(pattern string, maskedNames []string) (regex *regexp.Regexp, replaceGroups string) {
+func buildRegexAndGroups(pattern string, maskedNames []string) (regex *regexp.Regexp, replaceGroups string) {
 	regex = regexp.MustCompile(pattern)
 
 	names := regex.SubexpNames()
@@ -32,17 +32,22 @@ func getInput(reader io.Reader) string {
 	return strings.Join(input, "\n")
 }
 
-func getMaskedPropStr(props []string, ignoreCase bool) string {
-	masked := "(?i).*?password.*?"
+func getMaskedPropStr(props []string, ignoreCase bool, partial bool) string {
+	masked := `(?i)"?.*?password.*?"?`
 
-	if len(props) > 0 {
+	for _, prop := range props {
 		var caseString string
 		if ignoreCase {
 			caseString = "(?i)"
 		} else {
 			caseString = "(?-i)"
 		}
-		masked = fmt.Sprintf("%s|%s%s", masked, caseString, strings.Join(props, "|"))
+
+		if partial {
+			masked = fmt.Sprintf(`%s|"?%s.*%s.*"?`, masked, caseString, prop)
+		} else {
+			masked = fmt.Sprintf(`%s|"?%s%s"?`, masked, caseString, prop)
+		}
 	}
 
 	return masked
