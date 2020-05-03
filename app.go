@@ -26,6 +26,11 @@ var (
 			Usage:   "case insensitive match",
 			Aliases: []string{"i"},
 		},
+		&cli.BoolFlag{
+			Name:    "partial-match",
+			Usage:   "match if property contains the specified string",
+			Aliases: []string{"l"},
+		},
 	}
 
 	app = cli.App{
@@ -36,17 +41,18 @@ var (
 			mode := c.String("m")
 			ignoreCase := c.Bool("i")
 			properties := c.StringSlice("p")
+			partial := c.Bool("l")
 
 			config := mask.NewConfig(os.Stdin, os.Stdout)
 
 			switch mode {
 			case "tf":
-				masker := mask.NewTFMasker(properties, ignoreCase)
+				masker := mask.NewTFMasker(properties, ignoreCase, partial)
 				masker.Mask(config)
 
 				return nil
 			case "json":
-				masker := mask.NewJSONMasker(properties, ignoreCase)
+				masker := mask.NewJSONMasker(properties, ignoreCase, partial)
 				masker.Mask(config)
 
 				return nil

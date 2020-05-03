@@ -10,6 +10,7 @@ type maskerTestCase struct {
 	description string
 	props       []string
 	ignoreCase  bool
+	partial     bool
 	input       string
 	want        string
 }
@@ -21,7 +22,7 @@ func runTFMaskerTests(t *testing.T, cases []maskerTestCase) {
 		t.Run(test.description, func(t *testing.T) {
 			t.Helper()
 
-			masker := NewTFMasker(test.props, test.ignoreCase)
+			masker := NewTFMasker(test.props, test.ignoreCase, test.partial)
 			got := getMaskOutput(t, masker, test.input)
 			assertMatch(t, got, test.want)
 		})
@@ -35,7 +36,7 @@ func runJSONMaskerTests(t *testing.T, cases []maskerTestCase) {
 		t.Run(test.description, func(t *testing.T) {
 			t.Helper()
 
-			masker := NewJSONMasker(test.props, test.ignoreCase)
+			masker := NewJSONMasker(test.props, test.ignoreCase, test.partial)
 			got := getMaskOutput(t, masker, test.input)
 			assertMatch(t, got, test.want)
 		})

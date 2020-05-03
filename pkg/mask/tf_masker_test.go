@@ -7,70 +7,68 @@ import (
 func TestMaskNewResource(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "should mask different combinations of 'password' by default",
-			props:       []string{},
-			ignoreCase:  false,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + prop        = "value"
-  + my_password = "secret"
-  + password    = "secret"
-  + password2   = "secret"
-  + PasSWorD    = "secret"
-  + MyPassWORD2 = "SECRET"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + prop        = "value"
-  + my_password = "***"
-  + password    = "***"
-  + password2   = "***"
-  + PasSWorD    = "***"
-  + MyPassWORD2 = "***"
-}`,
+			description: "masks 'password' by default",
+			input:       ` + password = "secret"`,
+			want:        ` + password = "***"`,
 		},
 		{
-			description: "masks specified property (case sensitive)",
+			description: "masks 'PaSSWorD' by default",
+			input:       `+ PaSSWorD = "secret"`,
+			want:        `+ PaSSWorD = "***"`,
+		},
+		{
+			description: "masks 'password2' by default",
+			input:       ` + password2 = "secret"`,
+			want:        ` + password2 = "***"`,
+		},
+		{
+			description: "masks 'myPassWORD' by default",
+			input:       ` + myPassWORD = "secret"`,
+			want:        ` + myPassWORD = "***"`,
+		},
+		{
+			description: "masks specified property",
 			props:       []string{"my_prop"},
-			ignoreCase:  false,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-  + My_Prop     = "value2"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "***"
-  + My_Prop     = "value2"
-}`,
+			input:       ` + my_prop = "secret"`,
+			want:        ` + my_prop = "***"`,
 		},
 		{
-			description: "masks combinations of specified property when ignoring case",
+			description: "does not mask specified property when casing does not match",
+			props:       []string{"my_prop"},
+			input:       ` + My_Prop = "value"`,
+			want:        ` + My_Prop = "value"`,
+		},
+		{
+			description: "masks property ignoring case",
 			props:       []string{"my_prop"},
 			ignoreCase:  true,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-  + My_Prop     = "value2"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "***"
-  + My_Prop     = "***"
-}`,
+			input:       ` + My_Prop = "value"`,
+			want:        ` + My_Prop = "***"`,
 		},
 		{
-			description: "prints output as is when no match",
-			props:       []string{},
-			ignoreCase:  false,
-			input: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-}`,
-			want: `
-+ resource "resource_type" "new_resource" {
-  + my_prop     = "value"
-}`,
+			description: "does not mask when nothing matches",
+			input:       ` + my_prop = "value"`,
+			want:        ` + my_prop = "value"`,
+		},
+		{
+			description: "masks new prop with quotes",
+			props:       []string{"my_prop"},
+			input:       `   + "my_prop" = "value"`,
+			want:        `   + "my_prop" = "***"`,
+		},
+		{
+			// This is the case where this prop is a sub-section of a parent section being added
+			description: "masks new prop with quotes and no '+'",
+			props:       []string{"my_prop"},
+			input:       `  "my_prop" = "value"`,
+			want:        `  "my_prop" = "***"`,
+		},
+		{
+			description: "masks partially matched property",
+			props:       []string{"other_prop", "my_prop"},
+			partial:     true,
+			input:       `   + "my_prop_partial" = "value"`,
+			want:        `   + "my_prop_partial" = "***"`,
 		},
 	}
 
@@ -80,40 +78,14 @@ func TestMaskNewResource(t *testing.T) {
 func TestMaskChangedResource(t *testing.T) {
 	cases := []maskerTestCase{
 		{
-			description: "only masks props containing 'password' by default",
-			props:       []string{},
-			ignoreCase:  false,
-			input: `
-~ resource "changed_resource" {
-  ~ prop      = "value" -> "new_value"     # comment
-  ~ password  = "secret" -> "new_secret"
-  ~ password2 = "secret2" -> "new_secret2" # with comment
-}`,
-			want: `
-~ resource "changed_resource" {
-  ~ prop      = "value" -> "new_value"     # comment
-  ~ password  = "***" -> "***"
-  ~ password2 = "***" -> "***" # with comment
-}`,
+			description: "masks 'password' with comment",
+			input:       ` ~ password = "secret" -> "new_secret"   # comment`,
+			want:        ` ~ password = "***" -> "***"   # comment`,
 		},
 		{
-			description: "additionally masks specified prop",
-			props:       []string{"prop"},
-			ignoreCase:  false,
-			input: `
-~ resource "changed_resource" {
-  ~ prop      = "value" -> "new_value"       # comment
-  ~ prop2     = "value2" -> "new_value2"     # comment
-  ~ password  = "secret" -> "new_secret"
-  ~ password2 = "secret2" -> "new_secret2"   # with comment
-}`,
-			want: `
-~ resource "changed_resource" {
-  ~ prop      = "***" -> "***"       # comment
-  ~ prop2     = "value2" -> "new_value2"     # comment
-  ~ password  = "***" -> "***"
-  ~ password2 = "***" -> "***"   # with comment
-}`,
+			description: "masks 'MyPasWorD2' with quotes and without comment",
+			input:       ` ~ "MyPassWorD2" = "secret" -> "new_secret"`,
+			want:        ` ~ "MyPassWorD2" = "***" -> "***"`,
 		},
 	}
 
@@ -127,19 +99,7 @@ func TestMaskRemovedResource(t *testing.T) {
 			props:       []string{"prop"},
 			ignoreCase:  false,
 			input:       ` - password = "secret" -> null`,
-			// - resource "removed_resource" {
-			//   - prop      = "value" -> null
-			//   - prop2     = "value2" -> null
-			//   - password  = "secret" -> null
-			//   - password2 = "secret2" -> null
-			// }`,
-			want: ` - password = "***" -> null`,
-			// - resource "removed_resource" {
-			//   - prop      = "***" -> null
-			//   - prop2     = "value2" -> null
-			//   - password  = "***" -> null
-			//   - password2 = "***" -> null
-			// }`,
+			want:        ` - password = "***" -> null`,
 		},
 	}
 

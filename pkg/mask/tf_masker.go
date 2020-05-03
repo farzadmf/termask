@@ -22,12 +22,12 @@ type TFMasker struct {
 }
 
 // NewTFMasker creates a new masker using the specified reader and matcher
-func NewTFMasker(props []string, ignoreCase bool) *TFMasker {
+func NewTFMasker(props []string, ignoreCase bool, partial bool) *TFMasker {
 	masker := TFMasker{
-		propsStr: getMaskedPropStr(props, ignoreCase),
+		propsStr: getMaskedPropStr(props, ignoreCase, partial),
 	}
 
-	masker.buildNewRemoveInfo()
+	masker.buildNewInfo()
 	masker.buildRemoveToNullInfo()
 	masker.buildReplaceInfo()
 	masker.buildReplaceKnownAfterInfo()
@@ -37,53 +37,42 @@ func NewTFMasker(props []string, ignoreCase bool) *TFMasker {
 
 // Mask scans the reader line by line and prints masked/unmasked output to the writer
 func (m *TFMasker) Mask(config Config) {
-	// input := getInput(config.Reader)
-
 	scanner := bufio.NewScanner(config.Reader)
 	for scanner.Scan() {
 		line := scanner.Text()
 		output := line
 
-		fmt.Println("newRemove", m.newRemoveRegex.MatchString(line))
-		fmt.Println("replace", m.replaceRegex.MatchString(line))
-		fmt.Println("replaceKnownAfterApply", m.replaceKnownAfterRegex.MatchString(line))
-		fmt.Println("removeNull", m.removeNullRegex.MatchString(line))
-
 		if m.newRemoveRegex.MatchString(line) {
+			fmt.Println("new")
 			output = m.newRemoveRegex.ReplaceAllString(line, m.newRemoveGroups)
 		}
 
 		if m.replaceRegex.MatchString(line) {
+			fmt.Println("replace")
 			output = m.replaceRegex.ReplaceAllString(output, m.replaceGroups)
 		}
 
 		if m.replaceKnownAfterRegex.MatchString(line) {
+			fmt.Println("replaceKnown")
 			output = m.replaceKnownAfterRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
 		}
 
 		if m.removeNullRegex.MatchString(line) {
+			fmt.Println("removeNull")
 			output = m.removeNullRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
 		}
 
 		fmt.Fprint(config.Writer, output)
 	}
-
-	// var output string
-	// output = m.newRemoveRegex.ReplaceAllString(input, m.newRemoveGroups)
-	// output = m.replaceRegex.ReplaceAllString(output, m.replaceGroups)
-	// output = m.replaceKnownAfterRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
-	// output = m.removeNullRegex.ReplaceAllString(output, m.replaceKnownAfterGroups)
-
-	// fmt.Fprint(config.Writer, output)
 }
 
-func (m *TFMasker) buildNewRemoveInfo() {
-	newRemovePattern := fmt.Sprintf(
-		`^( +[+-]? +)(?P<prop>"?%s"?)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")$`,
+func (m *TFMasker) buildNewInfo() {
+	newPattern := fmt.Sprintf(
+		`^( *[+-]? *)(?P<prop>"?%s"?)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")$`,
 		m.propsStr,
 	)
 
-	regex, groups := buildInfo(newRemovePattern, []string{"value"})
+	regex, groups := buildInfo(newPattern, []string{"value"})
 
 	m.newRemoveRegex = regex
 	m.newRemoveGroups = groups
@@ -103,8 +92,7 @@ func (m *TFMasker) buildRemoveToNullInfo() {
 
 func (m *TFMasker) buildReplaceInfo() {
 	replace := fmt.Sprintf(
-		`^( +~ +)(?P<prop>"?%s"?)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")`+
-			`( +-> +)(")(?P<changed_value>[a-zA-Z0-9%%._-]+)(")( +[#].*)*$`,
+		`^( +~ +)(?P<prop>"?%s"?)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")( +-> +)(")(?P<changed_value>[a-zA-Z0-9%%._-]+)(")( +[#].*)*$`,
 		m.propsStr,
 	)
 
@@ -116,8 +104,7 @@ func (m *TFMasker) buildReplaceInfo() {
 
 func (m *TFMasker) buildReplaceKnownAfterInfo() {
 	replaceKnownAfterPattern := fmt.Sprintf(
-		`^( +~ +)(?P<prop>"?%s"?)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")`+
-			`( +-> +)(\(known after apply\))( +[#].*)*$`,
+		`^( +~ +)(?P<prop>"?%s"?)( += +)(")(?P<value>[a-zA-Z0-9%%._-]+)(")( +-> +)(\(known after apply\))( +[#].*)*$`,
 		m.propsStr,
 	)
 

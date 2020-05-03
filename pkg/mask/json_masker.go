@@ -13,9 +13,9 @@ type JSONMasker struct {
 }
 
 // NewJSONMasker creates a new JSON masker
-func NewJSONMasker(props []string, ignoreCase bool) *JSONMasker {
+func NewJSONMasker(props []string, ignoreCase bool, partial bool) *JSONMasker {
 	masker := JSONMasker{
-		propsStr: getMaskedPropStr(props, ignoreCase),
+		propsStr: getMaskedPropStr(props, ignoreCase, partial),
 	}
 
 	masker.buildLineInfo()
