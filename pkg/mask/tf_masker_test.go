@@ -126,20 +126,20 @@ func TestMaskRemovedResource(t *testing.T) {
 			description: "masks 'password' and specified prop",
 			props:       []string{"prop"},
 			ignoreCase:  false,
-			input: `
-- resource "removed_resource" {
-  - prop      = "value" -> null
-  - prop2     = "value2" -> null
-  - password  = "secret" -> null
-  - password2 = "secret2" -> null
-}`,
-			want: `
-- resource "removed_resource" {
-  - prop      = "***" -> null
-  - prop2     = "value2" -> null
-  - password  = "***" -> null
-  - password2 = "***" -> null
-}`,
+			input:       ` - password = "secret" -> null`,
+			// - resource "removed_resource" {
+			//   - prop      = "value" -> null
+			//   - prop2     = "value2" -> null
+			//   - password  = "secret" -> null
+			//   - password2 = "secret2" -> null
+			// }`,
+			want: ` - password = "***" -> null`,
+			// - resource "removed_resource" {
+			//   - prop      = "***" -> null
+			//   - prop2     = "value2" -> null
+			//   - password  = "***" -> null
+			//   - password2 = "***" -> null
+			// }`,
 		},
 	}
 
