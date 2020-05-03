@@ -46,6 +46,7 @@ GLOBAL OPTIONS:
    --mode value, -m value      (tf|json) mode determines the type of the input
    --property value, -p value  property whose value we want to mask (can be specified multiple times)
    --ignore-case, -i           case insensitive match (default: false)
+   --partial-match, -l         match if property only contains the specified string (default: false)
    --help, -h                  show help (default: false)
 ```
 

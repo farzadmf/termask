@@ -28,7 +28,7 @@ var (
 		},
 		&cli.BoolFlag{
 			Name:    "partial-match",
-			Usage:   "match if property contains the specified string",
+			Usage:   "match if property only contains the specified string",
 			Aliases: []string{"l"},
 		},
 	}
