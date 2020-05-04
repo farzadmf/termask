@@ -46,7 +46,7 @@ GLOBAL OPTIONS:
    --mode value, -m value      (tf|json) mode determines the type of the input
    --property value, -p value  property whose value we want to mask (can be specified multiple times)
    --ignore-case, -i           case insensitive match (default: false)
-   --partial-match, -l         match if property only contains the specified string (default: false)
+   --partial-match, -l         match if property partially contains the specified string (default: false)
    --help, -h                  show help (default: false)
 ```
 
@@ -57,6 +57,8 @@ As mentioned in the help, you can use `--property` (or `-p`) to specify properti
 (this flag can be specified multiple times).
 
 By default, matching is done case sensitive, you can disable that by specifying the `--ignore-case` (or `-i`) flag.
+
+Also, by default, a property should match the specified string as a whole word, `--partial-match` (or `-l`) allows overriding that.
 
 ### Examples
 
@@ -107,6 +109,36 @@ Which will result in the following output:
 + resource "azurerm_resource_group" "rg" {
     + location = "***"
     + name     = "***"
+    ...
+}
+```
+
+An example combining multiple options, given the following Terraform output:
+
+```text
++ resource "azurerm_app_service" "main" {
+    ...
+    app_settings = {
+      ~ "MyConnectionString" = "secret-connection-string" -> "new-secret"
+    }
+    ...
+}
+```
+
+We use the following command:
+
+```bash
+terraform plan -no-color | termask -m tf -p connectionstring -i -l
+```
+
+And we get:
+
+```text
++ resource "azurerm_app_service" "main" {
+    ...
+    app_settings = {
+      ~ "MyConnectionString" = "***" -> "***"
+    }
     ...
 }
 ```
