@@ -11,6 +11,9 @@ It supports different inputs:
 
 ### Terraform
 
+> DISCLAIMER: I created this tool while only using Azure provider, so it is, in theory, possible that there would be bugs
+> when using other providers; I'll do my best to solve any issues opened for other scenarios
+
 Although Terraform allows marking `output` variables as `sensitive`, at the time of this writing, it doesn't provide a way to mark arbitrary values as "secret"
 
 Inspired by [tfmask](https://github.com/cloudposse/tfmask), this program allows masking property values (the ones in the form of
