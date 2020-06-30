@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	valuePattern = `[a-zA-Z0-9%;=/._-]`
+	valuePattern = `[+a-zA-Z0-9%;=/._-]`
 )
 
 // Config is used to specify the reader to mask and writer to write the output

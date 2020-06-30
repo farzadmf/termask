@@ -81,7 +81,7 @@ func TestMaskNewResource(t *testing.T) {
 			ignoreCase:  true,
 			partial:     true,
 			input: `"My__StorageAccountConnectionString"          = "DefaultEndpointsProtocol=https;` +
-				`AccountName=account;AccountKey=2S8/T4B4cquIjr6w==;EndpointSuffix=core.windows.net"`,
+				`AccountName=account;AccountKey=2S8/T4B+4cquIjr6w==;EndpointSuffix=core.windows.net"`,
 			want: `"My__StorageAccountConnectionString"          = "***"`,
 		},
 	}
