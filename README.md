@@ -21,6 +21,10 @@ Inspired by [tfmask](https://github.com/cloudposse/tfmask), this program allows 
 
 ***NOTE***: it's worth noting that, for the moment, it only supports the `-no-color` option of Terraform
 
+> ***VERY IMPORTANT NOTE***:
+> Something that may be concerning is that this tool would have access to your secret information and somehow steal them (store them somewhere, etc.)
+> I GUARANTEE that's NEVER going to happen, and this tool will only mask the secrets and WILL NOT use them in any way possible without your knowledge
+
 ## Installation
 
 You can use `go get` to download the tool (a proper executable will be available soon)
