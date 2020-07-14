@@ -1,3 +1,7 @@
+> ***VERY IMPORTANT NOTE***:
+> Something that may be concerning is that this tool would have access to your secret information and somehow steal them (store them somewhere, etc.)
+> I GUARANTEE that's NEVER going to happen, and this tool will only mask the secrets and WILL NOT use them in any way possible without your knowledge
+
 # termask
 
 A utility to mask property values in the terminal
@@ -20,10 +24,6 @@ Inspired by [tfmask](https://github.com/cloudposse/tfmask), this program allows 
 `"property" = "value"`) in the output of `terraform plan` and `terraform apply`
 
 ***NOTE***: it's worth noting that, for the moment, it only supports the `-no-color` option of Terraform
-
-> ***VERY IMPORTANT NOTE***:
-> Something that may be concerning is that this tool would have access to your secret information and somehow steal them (store them somewhere, etc.)
-> I GUARANTEE that's NEVER going to happen, and this tool will only mask the secrets and WILL NOT use them in any way possible without your knowledge
 
 ## Installation
 
