@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"dev.azure.com/farzadm/golang/termask.git/pkg/mask"
+	"github.com/farzadmf/termask/pkg/mask"
 	"github.com/urfave/cli/v2"
 )
 
