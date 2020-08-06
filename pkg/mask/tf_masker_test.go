@@ -84,6 +84,12 @@ func TestMaskNewResource(t *testing.T) {
 				`AccountName=account;AccountKey=2S8/T4B+4cquIjr6w==;EndpointSuffix=core.windows.net"`,
 			want: `"My__StorageAccountConnectionString"          = "***"`,
 		},
+		{
+			description: "masks values containing ',' or '#'",
+			props:       []string{"value"},
+			input:       ` - "value" = "s#cr,t"`,
+			want:        ` - "value" = "***"`,
+		},
 	}
 
 	runTFMaskerTests(t, cases)
